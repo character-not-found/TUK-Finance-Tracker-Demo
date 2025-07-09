@@ -81,7 +81,7 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Overview</h2> <!-- Changed title to "Overview" -->
+    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Business Overview</h2> <!-- Changed title to "Overview" -->
 
     <!-- Grid for Diagrams and Graphics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -143,13 +143,13 @@
     <div class="grid grid-cols-1 gap-8">
         <!-- Income Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Income</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Income</h3>
             <div class="overflow-x-auto">
                 <table id="incomeTable" class="min-w-full data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Date</th>
+                            <th class="text-left">ID</th>
+                            <th class="text-left">Date</th>
                             <th class="text-right">Tours (€)</th>
                             <th class="text-right">Transfers (€)</th>
                             <th class="text-right">Daily Total (€)</th>
@@ -166,15 +166,15 @@
 
         <!-- Daily Expenses Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Daily Expenses</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Daily Expenses</h3>
             <div class="overflow-x-auto">
                 <table id="dailyExpensesTable" class="min-w-full data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Category</th>
+                            <th class="text-left">ID</th>
+                            <th class="text-left">Date</th>
+                            <th class="text-left">Description</th>
+                            <th class="text-left">Category</th>
                             <th class="text-right">Amount (€)</th>
                         </tr>
                     </thead>
@@ -188,17 +188,17 @@
 
         <!-- Fixed Costs Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Fixed Costs</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Fixed Costs</h3>
             <div class="overflow-x-auto">
                 <table id="fixedCostsTable" class="min-w-full data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Type</th>
-                            <th>Category</th>
-                            <th>Recipient</th>
+                            <th class="text-left">ID</th>
+                            <th class="text-left">Date</th>
+                            <th class="text-left">Description</th>
+                            <th class="text-left">Type</th>
+                            <th class="text-left">Category</th>
+                            <th class="text-left">Recipient</th>
                             <th class="text-right">Amount (€)</th>
                         </tr>
                     </thead>
@@ -222,7 +222,10 @@
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth() + 1; // Month is 0-indexed
 
-            // Function to format date from నేపథ్యంలో-MM-DD to DD Month నేపథ్యంలో
+            // Store chart instances globally to manage their lifecycle
+            const chartInstances = {};
+
+            // Function to format date from YYYY-MM-DD to DD Month YYYY
             function formatDateToDDMonthYYYY(dateString) {
                 if (!dateString) return '-';
                 const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to avoid timezone issues
@@ -239,6 +242,19 @@
                     currency: 'EUR',
                     currencyDisplay: 'symbol' // Displays '€'
                 }).format(value);
+            }
+
+            // Function to get chart colors based on theme
+            function getChartColors() {
+                const isDarkMode = document.documentElement.classList.contains('dark');
+                return {
+                    primaryTextColor: isDarkMode ? '#e2e8f0' : '#4b5563', // Light gray for dark, dark gray for light
+                    axisLineColor: isDarkMode ? '#4a5568' : 'rgba(229, 231, 235, 0.5)', // Darker gray for dark, light gray for light
+                    gridLineColor: isDarkMode ? 'rgba(74, 85, 104, 0.5)' : 'rgba(229, 231, 235, 0.5)', // Transparent darker gray for dark
+                    tooltipBgColor: isDarkMode ? '#2d3748' : '#ffffff',
+                    tooltipBorderColor: isDarkMode ? '#4a5568' : '#e5e7eb',
+                    tooltipTextColor: isDarkMode ? '#e2e8f0' : '#4b5563'
+                };
             }
 
             // Function to fetch and display table data
@@ -284,34 +300,29 @@
                             const cell = row.insertCell();
                             let value = item[headerKey];
 
-                            // Special handling for income table to calculate daily_total_eur
-                            if (tableId === 'incomeTable' && headerKey === 'daily_total_eur') {
-                                value = (item.tours_revenue_eur || 0) + (item.transfers_revenue_eur || 0);
-                                cell.classList.add('text-right');
-                                cell.textContent = formatCurrency(value);
-                                return; // Skip further processing for this cell
-                            }
-                            // Special handling for hours_worked to be centered
-                            else if (tableId === 'incomeTable' && headerKey === 'hours_worked') {
-                                cell.classList.add('text-center'); // Added text-center class
-                                cell.textContent = value !== null && value !== undefined ? value : '-';
-                                return; // Skip further processing for this cell
-                            }
-
                             // Apply text-right class to currency columns and format currency
                             if (headerKey.includes('amount') || headerKey.includes('revenue') || headerKey.includes('eur')) {
                                 cell.classList.add('text-right');
                                 value = formatCurrency(value); // Use new currency formatter
                             }
-                            // Format dates
+                            // Special handling for hours_worked to be centered
+                            else if (tableId === 'incomeTable' && headerKey === 'hours_worked') {
+                                cell.classList.add('text-center'); // Added text-center class
+                                value = value !== null && value !== undefined ? value : '-';
+                            }
+                            // Format dates and ensure left alignment (default)
                             else if (headerKey === 'cost_date' || headerKey === 'income_date') {
                                 value = formatDateToDDMonthYYYY(value);
+                                // No class added, so it defaults to left-aligned
                             }
-                            // Handle enum values for display
-                            else if (headerKey === 'cost_frequency' && item.cost_frequency) {
-                                value = item.cost_frequency.replace(/_/g, ' '); // Replace underscores for readability
-                            } else if (headerKey === 'category' && item.category) {
-                                value = item.category.replace(/_/g, ' '); // Replace underscores for readability
+                            // Handle enum values for display and ensure left alignment (default)
+                            else if ((headerKey === 'cost_frequency' || headerKey === 'category') && item[headerKey]) {
+                                value = item[headerKey].replace(/_/g, ' '); // Replace underscores for readability
+                                // No class added, so it defaults to left-aligned
+                            }
+                            // Ensure ID, Description, and Recipient cells are left-aligned (default)
+                            else if (headerKey === 'doc_id' || headerKey === 'description' || headerKey === 'recipient') {
+                                // No class added, so it defaults to left-aligned
                             }
 
                             cell.textContent = value !== null && value !== undefined ? value : '-';
@@ -394,6 +405,13 @@
                         }
                     }
 
+                    const colors = getChartColors(); // Get colors based on theme
+
+                    // Destroy existing chart instance if it exists
+                    if (chartInstances[chartId]) {
+                        chartInstances[chartId].destroy();
+                        delete chartInstances[chartId];
+                    }
 
                     // Specific options for pie charts to show percentages statically and values in tooltips
                     if (chartType === 'pie' || chartType === 'doughnut') {
@@ -416,7 +434,7 @@
 
                         // Datalabels plugin configuration for static percentages
                         options.plugins.datalabels = {
-                            color: '#000', // Changed to black for better contrast
+                            color: colors.primaryTextColor, // Changed to dynamic color for better contrast
                             formatter: (value, context) => {
                                 const total = context.chart.data.datasets[0].data.reduce((sum, current) => sum + current, 0);
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0; // One decimal place for percentage
@@ -431,7 +449,25 @@
                         // Move legend to bottom
                         options.plugins.legend = {
                             position: 'bottom',
+                            labels: {
+                                color: colors.primaryTextColor // Set legend text color dynamically
+                            }
                         };
+
+                        // Remove scales/axis grid for pie charts
+                        options.scales = {
+                            x: {
+                                display: false,
+                                grid: { display: false },
+                                ticks: { display: false }
+                            },
+                            y: {
+                                display: false,
+                                grid: { display: false },
+                                ticks: { display: false }
+                            }
+                        };
+
                     } else {
                         // Default legend position for non-pie charts (if not already set in options)
                         options.plugins = options.plugins || {};
@@ -439,7 +475,7 @@
                     }
 
 
-                    new Chart(canvas, {
+                    chartInstances[chartId] = new Chart(canvas, {
                         type: chartType,
                         data: chartData,
                         options: {
@@ -449,6 +485,9 @@
                                 // Default plugins for non-pie charts, overridden by specific pie chart options
                                 legend: {
                                     position: 'top',
+                                    labels: {
+                                        color: colors.primaryTextColor // Set legend text color dynamically
+                                    }
                                 },
                                 tooltip: {
                                     callbacks: {
@@ -462,6 +501,36 @@
                                             }
                                             return label;
                                         }
+                                    },
+                                    backgroundColor: colors.tooltipBgColor, // Set tooltip background
+                                    borderColor: colors.tooltipBorderColor, // Set tooltip border
+                                    titleColor: colors.tooltipTextColor, // Set tooltip title color
+                                    bodyColor: colors.tooltipTextColor // Set tooltip body text color
+                                }
+                            },
+                            scales: { // Apply dynamic colors to scales for bar charts
+                                x: {
+                                    grid: {
+                                        color: colors.gridLineColor // Dynamic grid line color
+                                    },
+                                    ticks: {
+                                        color: colors.primaryTextColor // Dynamic tick label color
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Amount (€)',
+                                        color: colors.primaryTextColor // Dynamic axis title color
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        color: colors.gridLineColor // Dynamic grid line color
+                                    },
+                                    ticks: {
+                                        color: colors.primaryTextColor // Dynamic tick label color
+                                    },
+                                    title: {
+                                        display: false // No title needed for categories
                                     }
                                 }
                             },
@@ -673,6 +742,59 @@
                 };
             };
 
+            // Function to re-render all charts and summary displays
+            async function renderAllDashboardElements() {
+                // Fetch and render charts
+                await fetchAndRenderChart(`/summary/expense-categories?year=${currentYear}&month=${currentMonth}`, 'monthlyExpenseCategoriesPieChart', 'noMonthlyExpenseCategoriesPieChart', 'pie', processCategoryData);
+                await fetchAndRenderChart(`/summary/income-sources?year=${currentYear}&month=${currentMonth}`, 'monthlyIncomeChart', 'noMonthlyIncomeChart', 'pie', processMonthlyIncomeData);
+                await fetchAndDisplayProfitLossAverageAndCashOnHand();
+                await fetchAndRenderChart(`/summary/global`, 'globalSummaryChart', 'noGlobalSummaryChart', 'bar', processGlobalSummary, {
+                       indexAxis: 'y', // Makes the bar chart horizontal
+                       scales: {
+                           x: { // x-axis for horizontal bar chart
+                               beginAtZero: true,
+                               title: { display: true, text: 'Amount (€)', color: getChartColors().primaryTextColor }, // Dynamic title color
+                               ticks: { callback: function(value) { return formatCurrency(value); }, color: getChartColors().primaryTextColor }, // Dynamic label color
+                               grid: { color: getChartColors().gridLineColor } // Dynamic grid line color
+                           },
+                           y: { // y-axis for horizontal bar chart
+                               title: { display: false }, // No title needed for categories
+                               ticks: { color: getChartColors().primaryTextColor }, // Dynamic label color
+                               grid: { color: getChartColors().gridLineColor } // Dynamic grid line color
+                           }
+                       },
+                       plugins: {
+                            legend: {
+                                display: false // Hide legend for simplicity as labels are on bars
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.x !== null) { // Use context.parsed.x for horizontal bar chart
+                                            label += formatCurrency(context.parsed.x);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            },
+                            datalabels: { // Add datalabels for values on bars
+                                color: getChartColors().primaryTextColor, // Dynamic color for better contrast
+                                anchor: 'end',
+                                align: 'start',
+                                formatter: (value) => formatCurrency(value),
+                                font: {
+                                    weight: 'bold',
+                                    size: 12
+                                }
+                            }
+                       }
+                });
+            }
+
 
             // Fetch and display data for tables
             const incomeHeaders = ['doc_id', 'income_date', 'tours_revenue_eur', 'transfers_revenue_eur', 'daily_total_eur', 'hours_worked'];
@@ -683,58 +805,21 @@
             await fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
             await fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
 
-            // Fetch and render charts
-            await fetchAndRenderChart(`/summary/expense-categories?year=${currentYear}&month=${currentMonth}`, 'monthlyExpenseCategoriesPieChart', 'noMonthlyExpenseCategoriesPieChart', 'pie', processCategoryData);
+            // Initial render of all elements
+            renderAllDashboardElements();
 
-            // Fetch and render Monthly Income chart (now a pie chart)
-            await fetchAndRenderChart(`/summary/income-sources?year=${currentYear}&month=${currentMonth}`, 'monthlyIncomeChart', 'noMonthlyIncomeChart', 'pie', processMonthlyIncomeData);
-
-            // Call the new function to handle Net Profit/Loss, Monthly Average, and Cash on Hand
-            await fetchAndDisplayProfitLossAverageAndCashOnHand();
-
-            // Fetch and render Global Summary chart (now spans three columns and is horizontal)
-            await fetchAndRenderChart(`/summary/global`, 'globalSummaryChart', 'noGlobalSummaryChart', 'bar', processGlobalSummary, {
-                   indexAxis: 'y', // Makes the bar chart horizontal
-                   scales: {
-                       x: { // x-axis for horizontal bar chart
-                           beginAtZero: true,
-                           title: { display: true, text: 'Amount (€)' },
-                           ticks: { callback: function(value) { return formatCurrency(value); } }
-                       },
-                       y: { // y-axis for horizontal bar chart
-                           title: { display: false } // No title needed for categories
-                       }
-                   },
-                   plugins: {
-                        legend: {
-                            display: false // Hide legend for simplicity as labels are on bars
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.x !== null) { // Use context.parsed.x for horizontal bar chart
-                                        label += formatCurrency(context.parsed.x);
-                                    }
-                                    return label;
-                                }
-                            }
-                        },
-                        datalabels: { // Add datalabels for values on bars
-                            color: '#fff', // White color for better contrast on bars
-                            anchor: 'end',
-                            align: 'start',
-                            formatter: (value) => formatCurrency(value),
-                            font: {
-                                weight: 'bold',
-                                size: 12
-                            }
-                        }
-                   }
+            // Setup MutationObserver to watch for theme changes (dark mode class on <html>)
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        console.log('HTML class attribute changed. Re-rendering charts.');
+                        renderAllDashboardElements(); // Re-render all charts and summary displays
+                    }
+                });
             });
+
+            // Start observing the <html> element for attribute changes
+            observer.observe(document.documentElement, { attributes: true });
         });
     </script>
 {% endblock %}

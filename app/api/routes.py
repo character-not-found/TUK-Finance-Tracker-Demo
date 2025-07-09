@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import logging # Import logging
+from datetime import datetime # Import datetime here
 
 # Import the individual routers
 from .routers import fixed_costs
@@ -37,7 +38,8 @@ async def read_root(request: Request):
     Serves the 'dashboard_content.html' template, which displays the main dashboard.
     """
     logger.info("Serving dashboard_content.html")
-    return templates.TemplateResponse("dashboard_content.html", {"request": request})
+    # Pass datetime to the template context
+    return templates.TemplateResponse("dashboard_content.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-expenses", response_class=HTMLResponse, summary="Serve the expense registration page")
 async def register_expenses_page(request: Request):
@@ -45,7 +47,8 @@ async def register_expenses_page(request: Request):
     Serves the 'register_expenses.html' template for adding new expense entries.
     """
     logger.info("Serving register_expenses.html")
-    return templates.TemplateResponse("register_expenses.html", {"request": request})
+    # Pass datetime to the template context
+    return templates.TemplateResponse("register_expenses.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-income", response_class=HTMLResponse, summary="Serve the income registration page")
 async def register_income_page(request: Request):
@@ -53,7 +56,8 @@ async def register_income_page(request: Request):
     Serves the 'register_income.html' template for adding new income entries.
     """
     logger.info("Serving register_income.html")
-    return templates.TemplateResponse("register_income.html", {"request": request})
+    # Pass datetime to the template context
+    return templates.TemplateResponse("register_income.html", {"request": request, "datetime": datetime})
 
 @app.get("/data-management", response_class=HTMLResponse, summary="Serve the data management page")
 async def data_management_page(request: Request):
@@ -61,7 +65,8 @@ async def data_management_page(request: Request):
     Serves the 'data_management.html' template for managing database entries.
     """
     logger.info("Serving data_management.html")
-    return templates.TemplateResponse("data_management.html", {"request": request})
+    # Pass datetime to the template context
+    return templates.TemplateResponse("data_management.html", {"request": request, "datetime": datetime})
 
 # Add a simple health check endpoint
 @app.get("/health", summary="Health check endpoint")

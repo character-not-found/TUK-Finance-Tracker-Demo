@@ -3,127 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}TUK'N'ROLL{% endblock %}</title>
-    <!-- Tailwind CSS CDN for easy styling -->
+    <title>{% block title %}TUK'N'ROLL Financial Dashboard{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN for graphics (only needed if block 'extra_head' is not used to include it) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS for global styles and dark mode -->
     <style>
-        /* Custom styles for the Inter font and general body styling */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: "Inter", sans-serif;
             background-color: #f3f4f6; /* Light gray background */
-            color: #374151; /* Dark gray text */
         }
-        /* Basic styling for dropdown menu */
-        .dropdown-menu {
-            display: none;
-            /* Ensure no gap by removing margin-top and positioning correctly */
-            /* top: 100%; is handled by Tailwind's top-full class now */
+        /* Base styles for dark mode */
+        html.dark {
+            background-color: #1a202c; /* Dark background for the whole page */
+            color: #e2e8f0; /* Light text color */
         }
-        .dropdown:hover .dropdown-menu {
-            display: block;
+        html.dark .bg-white {
+            background-color: #2d3748; /* Darker background for cards/sections */
         }
-        /* Table styling */
-        .data-table th, .data-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+        html.dark .text-gray-800 {
+            color: #f7fafc; /* Lighter text for dark mode */
         }
-        .data-table th {
-            background-color: #f9fafb; /* Lighter header background */
-            font-weight: 600;
-            color: #4b5563;
+        html.dark .text-gray-700 {
+            color: #cbd5e0; /* Lighter text for dark mode */
         }
-        .data-table tbody tr:hover {
-            background-color: #f3f4f6; /* Hover effect */
+        html.dark .text-gray-500 {
+            color: #a0aec0; /* Lighter gray text for dark mode */
         }
-        /* Chart container styling */
-        .chart-container {
-            position: relative;
-            height: 250px; /* Fixed height for consistency */
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        html.dark .border-gray-200 {
+            border-color: #4a5568; /* Darker border for dark mode */
         }
-        .chart-container canvas {
-            max-height: 100%;
-            max-width: 100%;
+        /* Specific dark mode styles for table headers and rows */
+        html.dark .data-table thead th {
+            background-color: #4a5568; /* Darker gray header */
+            color: #e2e8f0;
         }
-        /* Message styling for forms */
-        .message {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            font-weight: 500;
-            display: none; /* Hidden by default */
+        html.dark .data-table tbody tr:nth-child(odd) {
+            background-color: #2d3748; /* Darker row */
         }
-        .message.success {
-            background-color: #d1fae5; /* Green-100 */
-            color: #065f46; /* Green-800 */
-            border: 1px solid #34d399; /* Green-400 */
+        html.dark .data-table tbody tr:nth-child(even) {
+            background-color: #4a5568; /* Even darker row */
         }
-        .message.error {
-            background-color: #fee2e2; /* Red-100 */
-            color: #991b1b; /* Red-800 */
-            border: 1px solid #ef4444; /* Red-400 */
+        html.dark .data-table td {
+            color: #e2e8f0;
+        }
+        /* Styles for form fields in dark mode */
+        html.dark .form-field input[type="text"],
+        html.dark .form-field input[type="number"],
+        html.dark .form-field input[type="date"],
+        html.dark .form-field select,
+        html.dark .form-field textarea {
+            background-color: #4a5568; /* Darker input background */
+            color: #e2e8f0; /* Light input text */
+            border-color: #6b7280; /* Darker border */
+        }
+        html.dark .form-field input:focus,
+        html.dark .form-field select:focus,
+        html.dark .form-field textarea:focus {
+            border-color: #818cf8; /* Lighter indigo for focus */
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25); /* Lighter indigo shadow */
+        }
+        /* Button styles for dark mode */
+        html.dark .btn-primary {
+            background-color: #6366f1; /* Lighter indigo for dark mode primary */
+        }
+        html.dark .btn-primary:hover {
+            background-color: #4f46e5; /* Even lighter on hover */
+        }
+        html.dark .btn-secondary {
+            background-color: #9ca3af; /* Lighter gray for dark mode secondary */
+        }
+        html.dark .btn-secondary:hover {
+            background-color: #6b7280; /* Darker on hover */
+        }
+        html.dark .btn-danger {
+            background-color: #f87171; /* Lighter red for dark mode danger */
+        }
+        html.dark .btn-danger:hover {
+            background-color: #ef4444; /* Darker on hover */
+        }
+        html.dark .btn-edit {
+            background-color: #4ade80; /* Lighter green for dark mode edit */
+        }
+        html.dark .btn-edit:hover {
+            background-color: #22c55e; /* Darker on hover */
         }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen flex flex-col">
-    <!-- Top Bar / Header -->
-    <header class="bg-white shadow-md p-4 flex items-center justify-between flex-wrap">
-        <!-- Logo Placeholder and Title - Made clickable -->
-        <a href="/" class="flex items-center space-x-3 hover:opacity-75 transition-opacity duration-300 ease-in-out">
-            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-lg">
-                Logo
-            </div>
-            <h1 class="text-2xl font-extrabold text-indigo-700">TUK'N'ROLL</h1>
-        </a>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+    <nav class="bg-white shadow-md p-4 flex justify-between items-center">
+        <a href="/" class="text-2xl font-bold text-indigo-600">TUK'N'ROLL</a>
+        <div class="flex items-center space-x-4">
+            <a href="/dashboard" class="text-gray-700 hover:text-indigo-600 font-medium">Dashboard</a>
+            <a href="/add-entry" class="text-gray-700 hover:text-indigo-600 font-medium">Add Entry</a>
+            <a href="/data-management" class="text-gray-700 hover:text-indigo-600 font-medium">Data Management</a>
+            <!-- Dark Mode Toggle Button -->
+            <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <svg class="w-6 h-6 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M3 12h1m15.325-4.275l-.707-.707M4.372 19.328l-.707-.707m13.756 0l-.707.707M4.372 4.672l-.707.707"></path></svg>
+                <svg class="w-6 h-6 moon-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+    </nav>
 
-        <!-- Navigation Menu -->
-        <nav class="flex-grow flex justify-end items-center mt-4 md:mt-0">
-            <ul class="flex items-center space-x-6">
-                <li>
-                    <a href="/" class="text-gray-700 hover:text-indigo-600 font-medium transition duration-300 ease-in-out py-2 px-3 rounded-md hover:bg-gray-100">Dashboard</a>
-                </li>
-                <li class="relative dropdown">
-                    <a href="#" class="text-gray-700 hover:text-indigo-600 font-medium transition duration-300 ease-in-out py-2 px-3 rounded-md hover:bg-gray-100 flex items-center">
-                        Register
-                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </a>
-                    <!-- Changed mt-2 to top-full to remove gap and ensure direct positioning -->
-                    <ul class="dropdown-menu absolute right-0 top-full w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                        <li>
-                            <a href="/register-expenses" class="block px-4 py-2 text-gray-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-md transition duration-300 ease-in-out">Expenses</a>
-                        </li>
-                        <li>
-                            <a href="/register-income" class="block px-4 py-2 text-gray-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-md transition duration-300 ease-in-out">Income</a>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="/data-management" class="text-gray-700 hover:text-indigo-600 font-medium transition duration-300 ease-in-out py-2 px-3 rounded-md hover:bg-gray-100">Data Management</a>
-                </li>
-                <!-- Search Bar removed from here -->
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Main Content Area - This is where specific page content will go -->
-    <main class="flex-grow p-6">
+    <main class="flex-grow">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer (Optional) -->
-    <footer class="bg-gray-800 text-white p-4 text-center mt-auto">
-        <p>&copy; 2025 TUK'N'ROLL. All rights reserved.</p>
+    <footer class="bg-white shadow-md p-4 mt-8 text-center text-gray-600">
+        &copy; 2024 TUK'N'ROLL Financial Dashboard. All rights reserved.
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const htmlElement = document.documentElement; // This targets the <html> tag
+            const sunIcon = document.querySelector('.sun-icon');
+            const moonIcon = document.querySelector('.moon-icon');
+
+            // Function to set the theme
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    htmlElement.classList.remove('dark');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+                localStorage.setItem('theme', theme);
+            }
+
+            // Check for saved theme preference on load
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                // If no preference, check system preference
+                setTheme('dark');
+            } else {
+                setTheme('light'); // Default to light if no preference and system is not dark
+            }
+
+            // Toggle theme on button click
+            darkModeToggle.addEventListener('click', () => {
+                if (htmlElement.classList.contains('dark')) {
+                    setTheme('light');
+                } else {
+                    setTheme('dark');
+                }
+            });
+        });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

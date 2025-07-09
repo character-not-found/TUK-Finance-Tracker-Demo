@@ -1,0 +1,201 @@
+.main-container {
+    position: relative;
+}
+
+.table-scroll {
+    overflow: auto;
+}
+
+#total {
+    text-align: right;
+}
+
+.empty-cell {
+    background: repeating-linear-gradient(
+    -55deg,
+    #222,
+    #222 10px,
+    #333 10px,
+    #333 20px
+    );
+    opacity: 0.3;
+}
+
+.mbway {
+    background-color: rgba(95, 158, 160, 0.5);
+    text-align: right;
+}
+
+.trfs {
+    background-color: rgba(139, 0, 139, 0.5);
+    text-align: right;
+}
+
+.tg {
+    border-collapse:collapse;
+    border-spacing:0;
+    margin: auto;
+}
+
+.tg td {
+    border-color:black;
+    border-style:solid;
+    border-width:1px;
+    font-size:15px;
+    overflow:hidden;
+    padding:10px 5px;
+    word-break:normal;
+}
+
+.tg th {
+    border-color:black;
+    border-style:solid;border-width:1px;
+    font-size:16px;
+    overflow:hidden;
+    padding:10px 5px;
+    word-break:normal;
+    color: black;
+}
+
+.tg .tg-0lax {
+    text-align:left;
+    vertical-align:top
+}
+
+body {
+    background:  url("../images/option-2.jpg") no-repeat center center fixed; 
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+
+    margin: auto;
+    font-family: monospace;
+    color: black;
+}
+
+h3 {
+    font-size: 22px;
+    text-align: center;
+}
+
+.form-input {
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #eee;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    border-radius:10px;
+    width:100%;
+}
+
+.form {
+    margin: auto;
+    width: fit-content;
+}
+
+
+form.example input {
+    padding: 5px;
+    margin: 10px 0;
+    border: 2px solid #eee;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    border-radius:10px;
+    width:50%;
+}
+
+form.example button {
+    /* remove default behavior */
+    appearance:none;
+    -webkit-appearance:none;
+
+    /* usual styles */
+    padding:10px;
+    border:none;
+    background-color:#3F51B5;
+    color:#fff;
+    font-weight:600;
+    border-radius:5px;
+    width:10%;
+
+    float: inherit;
+    cursor: pointer;
+}
+
+form.example button:hover {
+    background: #0b7dda;
+}
+
+form.example::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+form.example {
+    padding: 10px;
+    text-align: center;
+}
+
+#professor {
+    width: 106%;
+}
+
+option {
+    padding: 10px;
+}
+
+label {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 600;
+    width: 10%;
+    text-align: center;
+}
+
+label, input {
+    display: inline-block;
+}
+
+#submit-button {
+    margin-bottom: 5%;
+}
+
+
+
+.error-block {
+    display: none;
+    position: absolute;
+    top: 6%;
+    left: 40%;
+    border:1px solid orange;
+    border-radius:4px;
+    width:16%;
+    background-color:white;
+    font-size:12px;
+    padding:5px;
+}
+
+.error-block::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px;
+    border-color: transparent transparent orange;
+}
+
+.confirm_deny {
+    text-align: center;
+}
+
+#confirm-button {
+    width: 25%;
+}
+
+#reject-button {
+    width: 25%;
+}
+

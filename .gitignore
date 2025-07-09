@@ -1,0 +1,20 @@
+# Python specific files
+__pycache__/
+*.pyc
+.Python
+env/
+venv/  # Virtual environment directory
+*.egg-info/
+.pytest_cache/
+
+# VS Code specific files (optional, but often personal settings)
+.vscode/
+
+# Database files - CRITICAL for financial data privacy
+db.json
+
+# Log files
+*.log
+
+# FastAPI/Uvicorn specific temporary files
+.uvicorn_reload_history

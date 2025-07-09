@@ -1,0 +1,117 @@
+{% extends 'index.html' %}
+
+{% block update %}
+<h3>Works!</h3>
+{% endblock %}
+
+<!--
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset=utf-8>
+    <title>JSE</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>.warning-block {
+        display: {{ warning_block }}
+        }
+    </style>
+    <style>.error-block {
+        display: {{ show_warning }}
+        }
+    </style>
+  </head>
+  <body>
+
+    <div class="site-logo">
+        <a href="{{ url_for ('home') }}">
+            <img src="../static/logos/jervis surf branco.png" alt="logo" class="logo">
+        </a>
+    </div>
+
+    <form class="example" method="post" action="" style="margin:auto;max-width:600px">
+        <input class="input-block" type="text" placeholder="Search" name="search">
+        <div class="error-block">{{ warning_string }}</div>
+        <button type="submit"><i class="fa fa-search"></i></button>
+        <br>
+        <label for="from">From:</label>
+        <input type="date" id="from" name="from">
+        <br>
+        <label for="to">To:</label>
+        <input type="date" id="to" name="to">
+    </form>
+
+    <div class="container">
+            
+        <h3>{{ customers_string }}</h3>
+        
+        <table class="tg">
+            <thead>
+                <tr>
+                {% for header in columns %}
+                  <th>{{header}}</th>
+                {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for client in clients %}               
+                <tr>
+                  {% for k, val in client.items() %}
+                    {% if val == None %}
+                        <td class="empty-cell">{{ val }}</td>
+                    {% else %}
+                        <td>{{ val }}</td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+        </table>
+        
+      </div>
+
+<div>
+
+<br>
+<br>
+<br>
+
+<form action="/post/" method="post" enctype="multipart/form-data" class="form">
+    <div>
+        <input type="text" class="form-input" id="name" name="client_name" placeholder="Nome do Aluno" size="50" required/>
+    </div>
+    <div>
+        <input type="text" class="form-input" id="parent" name="client_parent" placeholder="Encarregado de Educação" size="50" />
+    </div>
+    <div class="box">
+        <select type="text" class="form-input" id="professor" name="professor" placeholder="Professor">
+          <option value="Filipe">Filipe</option>
+          <option value="Inês">Inês</option>
+        </select>
+    </div>
+    <div>
+      <input type="number" class="form-input" id="payment" name="payment" placeholder="Valor de Pagamento" size="50" />
+    </div>
+    <div>
+        <input type="date" class="form-input" id="payment_date" name="payment_date" size="50" required/>
+    </div>
+
+    <br>
+
+    
+</form>
+
+    <h3 class="warning_block">{{warning}}</h3>
+    <form action= "/post/confirm/" method="post">
+        <div class="confirm_deny">
+            <button type="submit" id="reject-button" name="confirm_deny" value="reject">Voltar Atrás</button>
+            <button type="submit" id="confirm-button" name="confirm_deny" value="confirm">Confirmar</button>
+        </div>
+    </form>
+</div>
+
+
+  </body>
+</html>
+-->

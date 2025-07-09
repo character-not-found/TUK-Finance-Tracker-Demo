@@ -1,0 +1,740 @@
+{% extends 'home.html' %}
+
+{% block title %}Dashboard - TUK'N'ROLL{% endblock %}
+
+{% block extra_head %}
+    <!-- Chart.js CDN for graphics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- Chart.js Datalabels Plugin for showing percentages on slices -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        /* Custom CSS to ensure right alignment for currency cells */
+        .data-table td.text-right {
+            text-align: right;
+        }
+        /* Custom CSS to ensure right alignment for currency headers */
+        .data-table th.text-right {
+            text-align: right;
+        }
+        /* Custom CSS for centered cells */
+        .data-table td.text-center {
+            text-align: center;
+        }
+        /* Custom CSS to ensure center alignment for specific table headers */
+        .data-table th.text-center {
+            text-align: center;
+        }
+        /* Chart container styling for responsiveness */
+        .chart-container {
+            position: relative;
+            height: 250px; /* Fixed height for consistency */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Style for total amount display, now using normal document flow */
+        .total-amount-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #374151; /* Dark gray text */
+            background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white background */
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 10px; /* Add margin to separate from legend */
+            text-align: center; /* Center the text within the div */
+        }
+        /* Styles for the Net Profit/Loss and Monthly Average display */
+        .profit-loss-display {
+            font-size: 2.5rem; /* Larger font size for the main value */
+            font-weight: bold;
+            text-align: center;
+        }
+        .monthly-average-display {
+            font-size: 2.5rem; /* Same font size as profit-loss-display for "same weight" */
+            font-weight: bold; /* Same font weight as profit-loss-display for "same weight" */
+            text-align: center;
+        }
+        /* New style for yearly total display */
+        .yearly-total-display {
+            font-size: 1.5rem; /* Slightly smaller than monthly profit/loss, but prominent */
+            font-weight: bold;
+            text-align: center;
+            margin-top: 15px; /* Space from the chart above */
+        }
+        /* New style for Cash on Hand display */
+        .cash-on-hand-display {
+            font-size: 2.5rem; /* Same font size as profit-loss-display */
+            font-weight: bold;
+            text-align: center;
+            /* Adjusted margin to reduce space */
+            margin-top: 5px; /* Reduced margin to bring closer to title */
+            margin-bottom: 0; /* Ensure no extra space below */
+        }
+        /* Adjusted style for the title of Cash on Hand */
+        .cash-on-hand-display + h3 { /* Selects the h3 immediately preceding .cash-on-hand-display */
+            margin-bottom: 5px; /* Reduced margin to bring closer to value */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Overview</h2> <!-- Changed title to "Overview" -->
+
+    <!-- Grid for Diagrams and Graphics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <!-- Monthly Expense Categories Chart (now titled Monthly Expenses) -->
+        <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Expenses</h3> <!-- Changed title -->
+            <div class="chart-container">
+                <canvas id="monthlyExpenseCategoriesPieChart"></canvas> <!-- ID remains, but content is expenses -->
+                <p id="noMonthlyExpenseCategoriesPieChart" class="text-gray-500 text-center py-2 hidden">No monthly expense categories data.</p>
+            </div>
+            <!-- Total display for Monthly Expenses -->
+            <div id="totalMonthlyExpensesDisplay" class="total-amount-display hidden"></div>
+        </div>
+
+        <!-- Monthly Income Chart (now a Pie Chart) -->
+        <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Income</h3>
+            <div class="chart-container">
+                <canvas id="monthlyIncomeChart"></canvas>
+            </div>
+            <p id="noMonthlyIncomeChart" class="text-gray-500 text-center py-2 hidden">No monthly income data.</p>
+            <!-- Total display for Monthly Income -->
+            <div id="totalMonthlyIncomeDisplay" class="total-amount-display hidden"></div>
+        </div>
+
+        <!-- Net Profit/Loss, Monthly Average, and Cash on Hand Display -->
+        <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center gap-y-4 min-h-[250px]">
+            <div> <!-- Container for Net Profit/Loss title and value -->
+                <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Net Profit/Loss</h3>
+                <div id="netProfitLossDisplay" class="profit-loss-display"></div>
+            </div>
+            <div> <!-- Container for Monthly Average title and value -->
+                <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Average</h3>
+                <div id="monthlyAverageValueDisplay" class="monthly-average-display"></div>
+            </div>
+            <div> <!-- New Container for Cash on Hand -->
+                <h3 class="text-xl font-semibold text-gray-700 text-center">Cash On Hand</h3>
+                <div id="cashOnHandDisplay" class="cash-on-hand-display"></div>
+            </div>
+            <p id="noNetProfitLossChart" class="text-gray-500 text-center py-2 hidden">No summary data available.</p>
+        </div>
+    </div>
+
+    <!-- Global Summary Chart (now spans three columns and is titled "Summary") -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:col-span-3 gap-6 mb-12">
+        <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center lg:col-span-3">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Summary</h3> <!-- Changed title -->
+            <div class="chart-container">
+                <canvas id="globalSummaryChart"></canvas> <!-- Changed ID to globalSummaryChart -->
+            </div>
+            <p id="noGlobalSummaryChart" class="text-gray-500 text-center py-2 hidden">No global summary data.</p>
+            <!-- Total display for Global Summary -->
+            <div id="totalGlobalSummaryDisplay" class="yearly-total-display hidden"></div> <!-- Changed ID to totalGlobalSummaryDisplay -->
+        </div>
+    </div>
+
+
+    <!-- Data Tables Section -->
+    <div class="grid grid-cols-1 gap-8">
+        <!-- Income Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Income</h3>
+            <div class="overflow-x-auto">
+                <table id="incomeTable" class="min-w-full data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th class="text-right">Tours (€)</th>
+                            <th class="text-right">Transfers (€)</th>
+                            <th class="text-right">Daily Total (€)</th>
+                            <th class="text-center">Hours Worked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Income data will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
+                <p id="noIncome" class="text-gray-500 text-center py-4 hidden">No income recorded.</p>
+            </div>
+        </div>
+
+        <!-- Daily Expenses Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Daily Expenses</h3>
+            <div class="overflow-x-auto">
+                <table id="dailyExpensesTable" class="min-w-full data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th class="text-right">Amount (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Daily expense data will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
+                <p id="noDailyExpenses" class="text-gray-500 text-center py-4 hidden">No daily expenses recorded.</p>
+            </div>
+        </div>
+
+        <!-- Fixed Costs Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Fixed Costs</h3>
+            <div class="overflow-x-auto">
+                <table id="fixedCostsTable" class="min-w-full data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Recipient</th>
+                            <th class="text-right">Amount (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Fixed cost data will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
+                <p id="noFixedCosts" class="text-gray-500 text-center py-4 hidden">No fixed costs recorded.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        // Register the ChartDataLabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1; // Month is 0-indexed
+
+            // Function to format date from నేపథ్యంలో-MM-DD to DD Month నేపథ్యంలో
+            function formatDateToDDMonthYYYY(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to avoid timezone issues
+                const options = { day: '2-digit', month: 'long', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+
+            // Function to format currency in European style (e.g., 1 234,56 €)
+            function formatCurrency(value) {
+                if (typeof value !== 'number' || isNaN(value)) return '0.00 €';
+                // Using 'fr-FR' locale for space as thousands separator, comma as decimal, and symbol after
+                return new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR',
+                    currencyDisplay: 'symbol' // Displays '€'
+                }).format(value);
+            }
+
+            // Function to fetch and display table data
+            async function fetchData(endpoint, tableId, noDataMessageId, headers) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    let data = await response.json();
+                    const tableBody = document.getElementById(tableId).querySelector('tbody');
+                    const noDataMessage = document.getElementById(noDataMessageId);
+
+                    tableBody.innerHTML = ''; // Clear existing data
+
+                    if (data.length === 0) {
+                        noDataMessage.classList.remove('hidden');
+                        return;
+                    } else {
+                        noDataMessage.classList.add('hidden');
+                    }
+
+                    // Sort data: primary by date (desc), secondary by doc_id (desc)
+                    data.sort((a, b) => {
+                        const dateA = new Date(a.cost_date || a.income_date);
+                        const dateB = new Date(b.cost_date || b.income_date);
+
+                        // Primary sort by date (descending)
+                        if (dateA.getTime() !== dateB.getTime()) {
+                            return dateB - dateA;
+                        }
+
+                        // Secondary sort by doc_id (descending) if dates are the same
+                        return b.doc_id - a.doc_id;
+                    });
+
+                    // Limit to top 10 most recent items
+                    data = data.slice(0, 10);
+
+                    data.forEach(item => {
+                        const row = tableBody.insertRow();
+                        headers.forEach(headerKey => {
+                            const cell = row.insertCell();
+                            let value = item[headerKey];
+
+                            // Special handling for income table to calculate daily_total_eur
+                            if (tableId === 'incomeTable' && headerKey === 'daily_total_eur') {
+                                value = (item.tours_revenue_eur || 0) + (item.transfers_revenue_eur || 0);
+                                cell.classList.add('text-right');
+                                cell.textContent = formatCurrency(value);
+                                return; // Skip further processing for this cell
+                            }
+                            // Special handling for hours_worked to be centered
+                            else if (tableId === 'incomeTable' && headerKey === 'hours_worked') {
+                                cell.classList.add('text-center'); // Added text-center class
+                                cell.textContent = value !== null && value !== undefined ? value : '-';
+                                return; // Skip further processing for this cell
+                            }
+
+                            // Apply text-right class to currency columns and format currency
+                            if (headerKey.includes('amount') || headerKey.includes('revenue') || headerKey.includes('eur')) {
+                                cell.classList.add('text-right');
+                                value = formatCurrency(value); // Use new currency formatter
+                            }
+                            // Format dates
+                            else if (headerKey === 'cost_date' || headerKey === 'income_date') {
+                                value = formatDateToDDMonthYYYY(value);
+                            }
+                            // Handle enum values for display
+                            else if (headerKey === 'cost_frequency' && item.cost_frequency) {
+                                value = item.cost_frequency.replace(/_/g, ' '); // Replace underscores for readability
+                            } else if (headerKey === 'category' && item.category) {
+                                value = item.category.replace(/_/g, ' '); // Replace underscores for readability
+                            }
+
+                            cell.textContent = value !== null && value !== undefined ? value : '-';
+                        });
+                    });
+                } catch (error) {
+                    console.error(`Error fetching data for ${tableId}:`, error); // Keep error logs
+                    document.getElementById(noDataMessageId).textContent = `Error loading data: ${error.message}`;
+                    document.getElementById(noDataMessageId).classList.remove('hidden');
+                }
+            }
+
+            // Function to fetch data and render a chart
+            async function fetchAndRenderChart(endpoint, chartId, noDataMessageId, chartType, dataProcessor, options = {}) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const rawData = await response.json();
+                    const noDataMessage = document.getElementById(noDataMessageId);
+                    const canvas = document.getElementById(chartId);
+                    // Correctly target total display divs based on chartId
+                    const totalDisplayDiv = (chartId === 'monthlyExpenseCategoriesPieChart') ? document.getElementById('totalMonthlyExpensesDisplay') :
+                                          (chartId === 'monthlyIncomeChart') ? document.getElementById('totalMonthlyIncomeDisplay') :
+                                          (chartId === 'globalSummaryChart') ? document.getElementById('totalGlobalSummaryDisplay') : null;
+
+                    console.log(`[${chartId}] Fetching data. Raw data:`, rawData); // Debugging log
+
+                    if (Object.keys(rawData).length === 0 || (Array.isArray(rawData) && rawData.length === 0)) {
+                        noDataMessage.classList.remove('hidden');
+                        if (canvas) canvas.style.display = 'none'; // Hide canvas if no data
+                        if (totalDisplayDiv) {
+                            totalDisplayDiv.classList.add('hidden');
+                            console.log(`[${chartId}] Total display hidden due to no data.`); // Debugging log
+                        }
+                        console.log(`[${chartId}] No data. Hiding chart and total display.`); // Debugging log
+                        return;
+                    } else {
+                        noDataMessage.classList.add('hidden');
+                        if (canvas) canvas.style.display = 'block'; // Show canvas if data is present
+                        // Only show totalDisplayDiv if it exists and there's data
+                        if (totalDisplayDiv) {
+                            totalDisplayDiv.classList.remove('hidden');
+                            console.log(`[${chartId}] Data found. Showing chart and total display.`); // Debugging log
+                        }
+                    }
+
+                    const chartData = dataProcessor(rawData, chartId); // Pass chartId to dataProcessor
+
+                    // Update total display for the monthly expense categories pie chart
+                    if (chartId === 'monthlyExpenseCategoriesPieChart' && rawData) {
+                        const totalExpenses = Object.values(rawData).reduce((sum, val) => sum + val, 0);
+                        if (totalDisplayDiv) {
+                            totalDisplayDiv.textContent = `Total: ${formatCurrency(totalExpenses)}`;
+                            console.log(`[${chartId}] Calculated Total: ${formatCurrency(totalExpenses)}`); // Debugging log
+                        } else {
+                            console.log(`[${chartId}] totalDisplayDiv not found for updating text (after data processing).`); // Debugging log
+                        }
+                    }
+                    // Update total display for the monthly income pie chart
+                    if (chartId === 'monthlyIncomeChart' && rawData) {
+                        const totalIncome = Object.values(rawData).reduce((sum, val) => sum + val, 0);
+                           if (totalDisplayDiv) {
+                            totalDisplayDiv.textContent = `Total: ${formatCurrency(totalIncome)}`;
+                            console.log(`[${chartId}] Calculated Total: ${formatCurrency(totalIncome)}`); // Debugging log
+                        } else {
+                            console.log(`[${chartId}] totalDisplayDiv not found for updating text (after data processing).`); // Debugging log
+                        }
+                    }
+                    // Update total display for the global summary chart
+                    if (chartId === 'globalSummaryChart' && rawData) {
+                        const totalProfit = rawData.net_global_profit;
+                        if (totalDisplayDiv) {
+                            totalDisplayDiv.textContent = `Net Profit/Loss: ${formatCurrency(totalProfit)}`;
+                            totalDisplayDiv.style.color = totalProfit >= 0 ? 'green' : 'red';
+                            console.log(`[${chartId}] Calculated Global Profit/Loss: ${formatCurrency(totalProfit)}`); // Debugging log
+                        } else {
+                            console.log(`[${chartId}] totalGlobalSummaryDisplay not found for updating text (after data processing).`); // Debugging log
+                        }
+                    }
+
+
+                    // Specific options for pie charts to show percentages statically and values in tooltips
+                    if (chartType === 'pie' || chartType === 'doughnut') {
+                        options.plugins = options.plugins || {};
+                        options.plugins.tooltip = options.plugins.tooltip || {};
+                        options.plugins.tooltip.callbacks = options.plugins.tooltip.callbacks || {};
+
+                        // Tooltip callback to show ONLY value (no percentage)
+                        options.plugins.tooltip.callbacks.label = function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                const value = context.parsed;
+                                label += `${formatCurrency(value)}`; // Only show the formatted amount
+                            }
+                            return label;
+                        };
+
+                        // Datalabels plugin configuration for static percentages
+                        options.plugins.datalabels = {
+                            color: '#000', // Changed to black for better contrast
+                            formatter: (value, context) => {
+                                const total = context.chart.data.datasets[0].data.reduce((sum, current) => sum + current, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0; // One decimal place for percentage
+                                return percentage + '%';
+                            },
+                            font: {
+                                weight: 'bold',
+                                size: 12,
+                            }
+                        };
+
+                        // Move legend to bottom
+                        options.plugins.legend = {
+                            position: 'bottom',
+                        };
+                    } else {
+                        // Default legend position for non-pie charts (if not already set in options)
+                        options.plugins = options.plugins || {};
+                        options.plugins.legend = options.plugins.legend || { position: 'top' };
+                    }
+
+
+                    new Chart(canvas, {
+                        type: chartType,
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                // Default plugins for non-pie charts, overridden by specific pie chart options
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += formatCurrency(context.parsed.y);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            ...options // Merge custom options (which might override default plugins for pie charts)
+                        }
+                    });
+                } catch (error) {
+                    console.error(`Error fetching or rendering chart for ${chartId}:`, error); // Keep error logs
+                    if (canvas) canvas.style.display = 'none'; // Hide canvas on error
+                    document.getElementById(noDataMessageId).textContent = `Error loading data: ${error.message}`;
+                    document.getElementById(noDataMessageId).classList.remove('hidden');
+                    const totalDisplayDiv = (chartId === 'monthlyExpenseCategoriesPieChart') ? document.getElementById('totalMonthlyExpensesDisplay') :
+                                          (chartId === 'monthlyIncomeChart') ? document.getElementById('totalMonthlyIncomeDisplay') :
+                                          (chartId === 'globalSummaryChart') ? document.getElementById('totalGlobalSummaryDisplay') : null;
+                    if (totalDisplayDiv) totalDisplayDiv.classList.add('hidden');
+                }
+            }
+
+            // Function to fetch and display Net Profit/Loss, Monthly Average Income, and Cash on Hand
+            async function fetchAndDisplayProfitLossAverageAndCashOnHand() {
+                const netProfitLossDisplay = document.getElementById('netProfitLossDisplay');
+                const monthlyAverageValueDisplay = document.getElementById('monthlyAverageValueDisplay');
+                const cashOnHandDisplay = document.getElementById('cashOnHandDisplay'); // Get the new element
+                const noDataMessage = document.getElementById('noNetProfitLossChart');
+
+                try {
+                    const monthlySummaryResponse = await fetch(`/summary/monthly?year=${currentYear}&month=${currentMonth}`);
+                    if (!monthlySummaryResponse.ok) throw new Error(`HTTP error! status: ${monthlySummaryResponse.status}`);
+                    const monthlySummaryData = await monthlySummaryResponse.json();
+
+                    const incomeTableResponse = await fetch('/income/');
+                    if (!incomeTableResponse.ok) throw new Error(`HTTP error! status: ${incomeTableResponse.status}`);
+                    const incomeTableData = await incomeTableResponse.json();
+
+                    const cashOnHandResponse = await fetch('/summary/cash-on-hand'); // Fetch cash on hand
+                    if (!cashOnHandResponse.ok) throw new Error(`HTTP error! status: ${cashOnHandResponse.status}`);
+                    const cashOnHandData = await cashOnHandResponse.json();
+
+                    // Corrected key name from 'net_profit' to 'net_monthly_profit'
+                    if (!monthlySummaryData || monthlySummaryData.net_monthly_profit === undefined) {
+                        noDataMessage.classList.remove('hidden');
+                        netProfitLossDisplay.textContent = '';
+                        monthlyAverageValueDisplay.textContent = '';
+                        cashOnHandDisplay.textContent = ''; // Clear cash on hand if no monthly data
+                        return;
+                    }
+
+                    noDataMessage.classList.add('hidden');
+                    const netProfit = monthlySummaryData.net_monthly_profit; // Corrected key name
+                    netProfitLossDisplay.textContent = formatCurrency(netProfit);
+                    netProfitLossDisplay.style.color = netProfit >= 0 ? 'green' : 'red';
+
+                    // Calculate Monthly Average Income based on days with income
+                    const uniqueIncomeDates = new Set();
+                    incomeTableData.forEach(item => {
+                        const incomeDate = new Date(item.income_date);
+                        if (incomeDate.getFullYear() === currentYear && incomeDate.getMonth() + 1 === currentMonth) {
+                            uniqueIncomeDates.add(item.income_date); // Add unique date string
+                        }
+                    });
+
+                    const daysWorked = uniqueIncomeDates.size;
+                    let totalMonthlyIncome = 0;
+                    // Recalculate total monthly income from incomeTableData for the current month
+                    incomeTableData.forEach(item => {
+                        const incomeDate = new Date(item.income_date);
+                        if (incomeDate.getFullYear() === currentYear && incomeDate.getMonth() + 1 === currentMonth) {
+                            totalMonthlyIncome += (item.tours_revenue_eur || 0) + (item.transfers_revenue_eur || 0);
+                        }
+                    });
+
+                    const monthlyAverage = daysWorked > 0 ? totalMonthlyIncome / daysWorked : 0;
+                    monthlyAverageValueDisplay.textContent = formatCurrency(monthlyAverage);
+
+                    // Display Cash on Hand
+                    if (cashOnHandData && cashOnHandData.balance !== undefined) {
+                        cashOnHandDisplay.textContent = formatCurrency(cashOnHandData.balance);
+                        cashOnHandDisplay.style.color = cashOnHandData.balance >= 0 ? 'green' : 'red'; // Color based on balance
+                    } else {
+                        cashOnHandDisplay.textContent = 'N/A';
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching net profit/loss, monthly average, or cash on hand:', error);
+                    netProfitLossDisplay.textContent = 'Error loading data.';
+                    monthlyAverageValueDisplay.textContent = '';
+                    cashOnHandDisplay.textContent = 'Error loading data.'; // Show error for cash on hand too
+                    noDataMessage.textContent = `Error loading summary data: ${error.message}`;
+                    noDataMessage.classList.remove('hidden');
+                }
+            }
+
+
+            // Original color palette
+            const originalColors = [
+                '#ef4444', // Red
+                '#f97316', // Orange
+                '#eab308', // Yellow
+                '#22c55e', // Green
+                '#0ea5e9', // Blue
+                '#8b5cf6', // Violet
+                '#ec4899', // Pink
+                '#f43f5e', // Rose
+                '#facc15', // Amber
+                '#a3e635'  // Lime
+            ];
+
+            // Softer red hues for expenses - updated for better contrast
+            const softerRedHues = [
+                '#CD5C5C', // Indian Red (darker for contrast)
+                '#E57373', // Light Red
+                '#FFB6C1', // Light Pink
+                '#FFA07A', // Light Salmon
+                '#FA8072', // Salmon
+                '#F08080', // Light Coral
+                '#E9967A', // Dark Salmon
+                '#DB7093', // Pale Violet Red
+                '#FFD1DC', // Pale Pink
+                '#BC8F8F'  // Rosy Brown
+            ];
+
+            // Softer green hues for income
+            const softerGreenHues = [
+                '#8BC34A', // Light Green
+                '#AED581', // Light Green (lighter)
+                '#C5E1A5', // Light Green (paler)
+                '#DCE775', // Lime Green (soft)
+                '#9CCC65', // Green (medium)
+                '#7CB342'  // Light Green (darker)
+            ];
+
+            // Softer blue hues for profit/loss
+            const softerBlueHues = [
+                '#64B5F6', // Light Blue
+                '#90CAF9', // Lighter Blue
+                '#BBDEFB', // Pale Blue
+                '#E3F2FD'  // Very Light Blue
+            ];
+
+
+            // Data Processers for Charts
+            const processCategoryData = (data, chartId) => { // Accept chartId
+                const labels = Object.keys(data);
+                const values = Object.values(data);
+
+                let colorsToUse;
+                if (chartId === 'monthlyExpenseCategoriesPieChart') {
+                    colorsToUse = softerRedHues; // Use softer red hues for expenses
+                } else { // For income sources chart
+                    colorsToUse = originalColors; // Use original colors for Income Sources (as requested)
+                }
+
+                return {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Amount (€)',
+                        data: values,
+                        backgroundColor: colorsToUse.slice(0, labels.length),
+                        borderColor: colorsToUse.slice(0, labels.length),
+                        borderWidth: 1
+                    }]
+                };
+            };
+
+            // New data processor for Monthly Income pie chart (Tours vs Transfers)
+            const processMonthlyIncomeData = (data) => {
+                const labels = [];
+                const values = [];
+
+                if (data.Tours !== undefined) {
+                    labels.push('Tours');
+                    values.push(data.Tours);
+                }
+                if (data.Transfers !== undefined) {
+                    labels.push('Transfers');
+                    values.push(data.Transfers);
+                }
+
+                if (labels.length === 0) {
+                    Object.keys(data).forEach(key => {
+                        labels.push(key);
+                        values.push(data[key]);
+                    });
+                }
+
+                return {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Amount (€)',
+                        data: values,
+                        backgroundColor: softerGreenHues.slice(0, labels.length),
+                        borderColor: softerGreenHues.slice(0, labels.length),
+                        borderWidth: 1
+                    }]
+                };
+            };
+
+            // Data processor for Global Summary
+            const processGlobalSummary = (data) => {
+                return {
+                    labels: ['Total Expenses', 'Total Income', 'Net Profit/Loss'], // Labels for global summary
+                    datasets: [{
+                        label: 'Amount (€)',
+                        data: [data.total_global_expenses, data.total_global_income, data.net_global_profit], // Use global data keys
+                        backgroundColor: [softerRedHues[0], softerGreenHues[0], softerBlueHues[0]], // Softer Red, Green, Blue
+                        borderColor: [softerRedHues[0], softerGreenHues[0], softerBlueHues[0]],
+                        borderWidth: 1
+                    }]
+                };
+            };
+
+
+            // Fetch and display data for tables
+            const incomeHeaders = ['doc_id', 'income_date', 'tours_revenue_eur', 'transfers_revenue_eur', 'daily_total_eur', 'hours_worked'];
+            const dailyExpensesHeaders = ['doc_id', 'cost_date', 'description', 'category', 'amount'];
+            const fixedCostsHeaders = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'amount_eur'];
+
+            await fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
+            await fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
+            await fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
+
+            // Fetch and render charts
+            await fetchAndRenderChart(`/summary/expense-categories?year=${currentYear}&month=${currentMonth}`, 'monthlyExpenseCategoriesPieChart', 'noMonthlyExpenseCategoriesPieChart', 'pie', processCategoryData);
+
+            // Fetch and render Monthly Income chart (now a pie chart)
+            await fetchAndRenderChart(`/summary/income-sources?year=${currentYear}&month=${currentMonth}`, 'monthlyIncomeChart', 'noMonthlyIncomeChart', 'pie', processMonthlyIncomeData);
+
+            // Call the new function to handle Net Profit/Loss, Monthly Average, and Cash on Hand
+            await fetchAndDisplayProfitLossAverageAndCashOnHand();
+
+            // Fetch and render Global Summary chart (now spans three columns and is horizontal)
+            await fetchAndRenderChart(`/summary/global`, 'globalSummaryChart', 'noGlobalSummaryChart', 'bar', processGlobalSummary, {
+                   indexAxis: 'y', // Makes the bar chart horizontal
+                   scales: {
+                       x: { // x-axis for horizontal bar chart
+                           beginAtZero: true,
+                           title: { display: true, text: 'Amount (€)' },
+                           ticks: { callback: function(value) { return formatCurrency(value); } }
+                       },
+                       y: { // y-axis for horizontal bar chart
+                           title: { display: false } // No title needed for categories
+                       }
+                   },
+                   plugins: {
+                        legend: {
+                            display: false // Hide legend for simplicity as labels are on bars
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) { // Use context.parsed.x for horizontal bar chart
+                                        label += formatCurrency(context.parsed.x);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        datalabels: { // Add datalabels for values on bars
+                            color: '#fff', // White color for better contrast on bars
+                            anchor: 'end',
+                            align: 'start',
+                            formatter: (value) => formatCurrency(value),
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                   }
+            });
+        });
+    </script>
+{% endblock %}

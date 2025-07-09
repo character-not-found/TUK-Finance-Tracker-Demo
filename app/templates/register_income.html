@@ -1,0 +1,115 @@
+{% extends 'home.html' %}
+
+{% block title %}Register Income - TUK'N'ROLL{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl bg-white rounded-lg shadow-lg">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Register New Income</h2>
+
+    <!-- Confirmation Message Area -->
+    <div id="confirmationMessage" class="message hidden"></div>
+
+    <!-- Income Form -->
+    <div id="incomeFormSection" class="form-section">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Income Details</h3>
+        <form id="incomeForm" class="space-y-4">
+            <div>
+                <label for="incomeDate" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
+                <input type="date" id="incomeDate" name="income_date" required
+                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="toursRevenue" class="block text-gray-700 text-sm font-bold mb-2">Tours Revenue (€):</label>
+                <input type="number" id="toursRevenue" name="tours_revenue_eur" step="0.01" min="0" value="0" required
+                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="transfersRevenue" class="block text-gray-700 text-sm font-bold mb-2">Transfers Revenue (€):</label>
+                <input type="number" id="transfersRevenue" name="transfers_revenue_eur" step="0.01" min="0" value="0" required
+                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="hoursWorked" class="block text-gray-700 text-sm font-bold mb-2">Hours Worked:</label>
+                <input type="number" id="hoursWorked" name="hours_worked" step="0.01" min="0" value="0" required
+                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out w-full">
+                Register Income
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const incomeForm = document.getElementById('incomeForm');
+            const confirmationMessage = document.getElementById('confirmationMessage');
+
+            // Function to show message
+            function showMessage(message, type) {
+                confirmationMessage.textContent = message;
+                confirmationMessage.className = `message ${type}`; // Reset classes and add new type
+                confirmationMessage.style.display = 'block';
+                setTimeout(() => {
+                    confirmationMessage.style.display = 'none';
+                }, 5000); // Hide after 5 seconds
+            }
+
+            // Set current date as default for date input
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('incomeDate').value = today;
+
+            // Handle Income Form Submission
+            incomeForm.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Prevent default form submission
+
+                // Basic client-side validation
+                const incomeDate = document.getElementById('incomeDate').value;
+                const toursRevenue = parseFloat(document.getElementById('toursRevenue').value);
+                const transfersRevenue = parseFloat(document.getElementById('transfersRevenue').value);
+                const hoursWorked = parseFloat(document.getElementById('hoursWorked').value); // Re-added
+
+                if (incomeDate === '' || isNaN(toursRevenue) || isNaN(transfersRevenue) || isNaN(hoursWorked) || toursRevenue < 0 || transfersRevenue < 0 || hoursWorked < 0) {
+                    showMessage('Please fill in all fields correctly for Income (amounts and hours must be non-negative).', 'error');
+                    return;
+                }
+
+                const formData = {
+                    income_date: incomeDate,
+                    tours_revenue_eur: toursRevenue,
+                    transfers_revenue_eur: transfersRevenue,
+                    hours_worked: hoursWorked // Re-added
+                };
+
+                try {
+                    const response = await fetch('/income/', { // Endpoint for income
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        showMessage('Income registered successfully!', 'success');
+                        incomeForm.reset(); // Clear form fields
+                        document.getElementById('incomeDate').value = today; // Reset date to today
+                        document.getElementById('toursRevenue').value = 0; // Reset to 0
+                        document.getElementById('transfersRevenue').value = 0; // Reset to 0
+                        document.getElementById('hoursWorked').value = 0; // Reset to 0
+                    } else {
+                        const errorData = await response.json();
+                        showMessage(`Error registering Income: ${errorData.detail || response.statusText}`, 'error');
+                        console.error('Error adding income:', errorData);
+                    }
+                } catch (error) {
+                    showMessage(`Network error: ${error.message}`, 'error');
+                    console.error('Network error during income submission:', error);
+                }
+            });
+        });
+    </script>
+{% endblock %}

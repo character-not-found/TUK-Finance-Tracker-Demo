@@ -1,0 +1,7 @@
+fastapi==0.116.0
+Jinja2==3.1.6
+pydantic==2.11.7
+pydantic_core==2.33.2
+starlette==0.46.2
+tinydb==4.8.2
+uvicorn==0.35.0

@@ -1,0 +1,126 @@
+body {
+    font-family: "Inter", sans-serif;
+    background-color: #f3f4f6; /* Light gray background */
+}
+
+/* Base styles for dark mode */
+html.dark {
+    background-color: #1a202c; /* Dark background for the whole page */
+    color: #e2e8f0; /* Light text color */
+}
+
+/* New: Ensure body background changes in dark mode */
+html.dark body {
+    background-color: #1a202c; /* Dark background for the body */
+}
+
+/* Adjusted: Darker background for elements previously bg-white (cards, tables, etc.) */
+html.dark .bg-white {
+    background-color: #2d3748; /* Darker background for cards/sections */
+}
+
+/* Adjusted: Specific dark mode styles for text colors */
+html.dark .text-gray-800 {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+
+html.dark .text-gray-700 {
+    color: #cbd5e0; /* Lighter text for dark mode */
+}
+
+html.dark .text-gray-500 {
+    color: #a0aec0; /* Lighter gray text for dark mode */
+}
+
+html.dark .border-gray-200 {
+    border-color: #4a5568; /* Darker border for dark mode */
+}
+
+/* Specific dark mode styles for table headers and rows */
+html.dark .data-table thead th {
+    background-color: #4a5568; /* Darker gray header */
+    color: #e2e8f0;
+}
+
+html.dark .data-table tbody tr:nth-child(odd) {
+    background-color: #2d3748; /* Darker row */
+}
+
+html.dark .data-table tbody tr:nth-child(even) {
+    background-color: #4a5568; /* Even darker row */
+}
+
+html.dark .data-table td {
+    color: #e2e8f0;
+}
+
+/* Styles for form fields in dark mode */
+html.dark .form-field input[type="text"],
+html.dark .form-field input[type="number"],
+html.dark .form-field input[type="date"],
+html.dark .form-field select,
+html.dark .form-field textarea {
+    background-color: #4a5568; /* Darker input background */
+    color: #e2e8f0; /* Light input text */
+    border-color: #6b7280; /* Darker border */
+}
+html.dark .form-field input:focus,
+html.dark .form-field select:focus,
+html.dark .form-field textarea:focus {
+    border-color: #818cf8; /* Lighter indigo for focus */
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25); /* Lighter indigo shadow */
+}
+
+/* Button styles for dark mode */
+html.dark .btn-primary {
+    background-color: #6366f1; /* Lighter indigo for dark mode primary */
+}
+
+html.dark .btn-primary:hover {
+    background-color: #4f46e5; /* Even lighter on hover */
+}
+
+html.dark .btn-secondary {
+    background-color: #9ca3af; /* Lighter gray for dark mode secondary */
+}
+
+html.dark .btn-secondary:hover {
+    background-color: #6b7280; /* Darker on hover */
+}
+
+html.dark .btn-danger {
+    background-color: #f87171; /* Lighter red for dark mode danger */
+}
+
+html.dark .btn-danger:hover {
+    background-color: #ef4444; /* Darker on hover */
+}
+
+html.dark .btn-edit {
+    background-color: #4ade80; /* Lighter green for dark mode edit */
+}
+
+html.dark .btn-edit:hover {
+    background-color: #22c55e; /* Darker on hover */
+}
+
+
+/* Specific styling for the footer background */
+footer {
+    background-color: #e5e7eb; /* Default light gray */
+}
+
+html.dark footer {
+    background-color: #1f2937; /* Darker gray for dark mode footer */
+}
+
+/* Styles for the dropdown menu */
+.dropdown-menu {
+    display: none;
+    /* Ensure no gap by removing margin-top and positioning correctly */
+    /* top: 100%; is handled by Tailwind's top-full class now */
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}

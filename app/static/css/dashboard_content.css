@@ -1,0 +1,96 @@
+/* Custom CSS to ensure right alignment for currency cells */
+.data-table td.text-right {
+    text-align: right;
+}
+/* Custom CSS to ensure right alignment for currency headers */
+.data-table th.text-right {
+    text-align: right;
+}
+/* Custom CSS for centered cells */
+.data-table td.text-center {
+    text-align: center;
+}
+/* Custom CSS to ensure center alignment for specific table headers */
+.data-table th.text-center {
+    text-align: center;
+}
+/* Chart container styling for responsiveness */
+.chart-container {
+    position: relative;
+    height: 250px; /* Fixed height for consistency */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.5rem; /* mx-auto mt-6 */
+}
+/* Style for total amount display, now using normal document flow */
+.total-amount-display {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #374151; /* Dark gray text */
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white background */
+    padding: 5px 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 10px; /* Add margin to separate from legend */
+    text-align: center; /* Center the text within the div */
+}
+/* Styles for the Net Profit/Loss and Monthly Average display */
+.profit-loss-display {
+    font-size: 2.5rem; /* Larger font size for the main value */
+    font-weight: bold;
+    text-align: center;
+}
+.monthly-average-display {
+    font-size: 2.5rem; /* Same font size as profit-loss-display for "same weight" */
+    font-weight: bold; /* Same font weight as profit-loss-display for "same weight" */
+    text-align: center;
+}
+/* New style for yearly total display */
+.yearly-total-display {
+    font-size: 1.5rem; /* Slightly smaller than monthly profit/loss, but prominent */
+    font-weight: bold;
+    text-align: center;
+    margin-top: 15px; /* Space from the chart above */
+}
+/* New style for Cash on Hand display */
+.cash-on-hand-display {
+    font-size: 2.5rem; /* Same font size as profit-loss-display */
+    font-weight: bold;
+    text-align: center;
+    /* Adjusted margin to reduce space */
+    margin-top: 5px; /* Reduced margin to bring closer to title */
+    margin-bottom: 0; /* Ensure no extra space below */
+}
+/* Adjusted style for the title of Cash on Hand */
+.cash-on-hand-display + h3 { /* Selects the h3 immediately preceding .cash-on-hand-display */
+    margin-bottom: 5px; /* Reduced margin to bring closer to value */
+}
+/* Dark mode styles */
+html.dark {
+    background-color: #1a202c; /* Dark background for the whole page */
+    color: #e2e8f0; /* Light text color */
+}
+html.dark .bg-white {
+    background-color: #2d3748; /* Darker background for cards */
+}
+html.dark .text-gray-800 {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+html.dark .text-gray-700 {
+    color: #cbd5e0; /* Lighter text for dark mode */
+}
+html.dark .data-table thead th {
+    background-color: #4a5568; /* Darker gray header */
+    color: #e2e8f0;
+}
+html.dark .data-table tbody tr:nth-child(odd) {
+    background-color: #2d3748; /* Darker row */
+}
+html.dark .data-table tbody tr:nth-child(even) {
+    background-color: #4a5568; /* Even darker row */
+}
+html.dark .data-table td {
+    color: #e2e8f0;
+}

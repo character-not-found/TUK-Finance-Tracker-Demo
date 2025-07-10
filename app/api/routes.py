@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging # Import logging
 from datetime import datetime # Import datetime here
@@ -23,7 +24,9 @@ app = FastAPI(
 )
 
 # Configure Jinja2Templates to serve HTML files
-templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates")
+templates = Jinja2Templates(directory="templates")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include the routers
 app.include_router(fixed_costs.router)

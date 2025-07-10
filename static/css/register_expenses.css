@@ -1,0 +1,24 @@
+.form-section.hidden {
+    display: none;
+}
+
+/* Styles for confirmation/error messages */
+.message {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.message.success {
+    background-color: #d1fae5; /* green-100 */
+    color: #065f46; /* green-800 */
+    border: 1px solid #34d399; /* green-400 */
+}
+
+.message.error {
+    background-color: #fee2e2; /* red-100 */
+    color: #991b1b; /* red-800 */
+    border: 1px solid #f87171; /* red-400 */
+}

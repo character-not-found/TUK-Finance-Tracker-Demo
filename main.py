@@ -20,4 +20,4 @@ if __name__ == "__main__":
     # uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
     # Or if you want to run it directly from main.py for development:
     import uvicorn
-    uvicorn.run("app.api.routes:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.api.routes:app", host="0.0.0.0", port=8500, reload=True)

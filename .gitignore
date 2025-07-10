@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .Python
 env/
-venv/  # Virtual environment directory
+.venv/
 *.egg-info/
 .pytest_cache/
 

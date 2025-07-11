@@ -1,24 +1,43 @@
 services:
+  # Your FastAPI application service
   web:
     build:
       context: . # Build context is the current directory (where Dockerfile is)
       dockerfile: Dockerfile # Path to the Dockerfile
     ports:
-      - "11000:11000" # Map host port 9000 to container port 9000
+      - "11000:11000" # Host_port:Container_port - Adjust 11000 if your production port is different
     volumes:
       # Mount the current directory into the container's /app directory
       # This allows for live code changes during development (if --reload is used)
       # and ensures the app's files are present.
       - .:/app
-      # Mount a volume for TinyDB data persistence
-      # This ensures your db.json file persists even if the container is removed.
-      # The host path is relative to where docker-compose.yml is located.
-      - ./db.json:/app/db.json
       # Mount a volume for logs persistence
-      # This allows you to access logs from your host machine in the 'logs' folder.
       - ./logs:/logs
-    # Environment variables can be added here if needed, e.g.:
-    # environment:
-    #   - SOME_VAR=some_value
+    env_file:
+       - ./.env.production
     # Restart policy to restart the container if it exits
     restart: unless-stopped
+    depends_on:
+      - db # Ensure 'db' service starts before 'web'
+    networks:
+      - app_network # Use a custom network for services to communicate
+
+  # PostgreSQL database service
+  db:
+    image: postgres:16-alpine # Use a specific, stable, lightweight version of PostgreSQL
+    env_file:
+      - ./.env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistent data volume for PostgreSQL
+    # Optional: Expose to host if you need to connect from outside container (e.g., for psql client)
+    # For production, consider removing this port mapping if not strictly needed for external access.
+    # - "5432:5432"
+    networks: # Corrected: Changed 'network' to 'networks' (plural)
+      - app_network # Connect to the same network as 'web'
+
+volumes:
+  postgres_data: # Define the named volume for persistent PostgreSQL data
+
+networks:
+  app_network: # Define a custom network for services to communicate securely
+    driver: bridge # Corrected: Changed 'drive' to 'driver'

@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # SECRET_KEY: Used for security purposes like token signing (crucial for JWTs).
     # IMPORTANT: GENERATE A REAL, STRONG, RANDOM KEY FOR PRODUCTION!
     # You can generate one with: import secrets; print(secrets.token_urlsafe(32))
-    SECRET_KEY: str = "your-super-secret-random-key-please-change-this-in-production-and-demo"
+    SECRET_KEY: str = "SECRET KEY"
 
     # --- Demo Specific Settings (Optional, will be used later on 'demo' branch) ---
     # These settings are optional and will only be used when APP_ENV is "demo".

@@ -78,7 +78,7 @@ async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Sessio
         logger.warning(f"Fixed cost with ID {doc_id} not found or update failed.")
         raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found or update failed.")
     # Retrieve the updated cost to return it
-    updated_cost = database.get_fixed_cost_by_id(doc_id) # Use the database function
+    updated_cost = database.get_fixed_cost_by_id(db, doc_id) # Use the database function
     if not updated_cost: # Should not happen if update was successful
         logger.error(f"Failed to retrieve updated fixed cost with ID {doc_id} after successful update operation.")
         raise HTTPException(status_code=500, detail="Failed to retrieve updated fixed cost.")

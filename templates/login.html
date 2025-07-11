@@ -1,0 +1,31 @@
+<!-- templates/login.html -->
+{% extends "home.html" %}
+
+{% block title %}Login - TUK'N'ROLL{% endblock %}
+
+{% block extra_head %}
+    <!-- Link to login.css using url_for -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="login-container">
+        <h2>Login to Tuk N' Roll</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <p id="message"></p>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', path='js/login.js') }}"></script>
+{% endblock %}

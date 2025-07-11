@@ -1,0 +1,63 @@
+/* static/css/login.css */
+/* Specific styles for the login page, overriding or adding to home.html's styles */
+body {
+    /* Ensure body doesn't have min-height 100vh from home.html if you want login-container to center */
+    /* The flexbox on body in home.html already handles centering if content is small */
+    background-color: #e0f7fa; /* Light blue background */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #263238;
+}
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    margin: auto; /* Center horizontally within main content area */
+    margin-top: 50px; /* Add some top margin to push it down from nav */
+    margin-bottom: 50px; /* Add some bottom margin */
+}
+.login-container h2 {
+    color: #00796b;
+    margin-bottom: 25px;
+}
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #546e7a;
+}
+.input-group input[type="text"],
+.input-group input[type="password"] {
+    width: calc(100% - 20px);
+    padding: 12px 10px;
+    border: 1px solid #b2dfdb;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box; /* Include padding in width */
+}
+button {
+    background-color: #00796b;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+button:hover {
+    background-color: #004d40;
+}
+#message {
+    margin-top: 20px;
+    color: red;
+    font-weight: bold;
+}

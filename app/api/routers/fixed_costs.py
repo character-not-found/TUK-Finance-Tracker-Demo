@@ -2,6 +2,9 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Dict, Any
 import logging # Import logging
+from sqlalchemy.orm import Session # Import Session
+from fastapi import Depends # Ensure Depends is imported
+from app.database import get_db # Import the database dependency
 
 # Relative imports from the 'app' package
 from ... import database
@@ -18,23 +21,23 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[FixedCost], summary="Retrieve all fixed costs")
-async def get_fixed_costs():
+async def get_fixed_costs(db: Session = Depends(get_db)):
     """
     Retrieves a list of all fixed cost entries from the database.
     """
     logger.info("Attempting to retrieve all fixed costs.")
-    costs = database.get_all_fixed_costs()
+    costs = database.get_all_fixed_costs(db)
     logger.info(f"Successfully retrieved {len(costs)} fixed costs.")
     return costs
 
 @router.get("/{doc_id}", response_model=FixedCost, summary="Retrieve a specific fixed cost by ID")
-async def get_fixed_cost_by_id(doc_id: int):
+async def get_fixed_cost_by_id(doc_id: int, db: Session = Depends(get_db)):
     """
     Retrieves a single fixed cost entry by its document ID.
     Raises a 404 error if the cost is not found.
     """
     logger.info(f"Attempting to retrieve fixed cost with ID: {doc_id}")
-    cost = database.get_fixed_cost_by_id(doc_id) # Use the database function
+    cost = database.get_fixed_cost_by_id(db, doc_id) # Use the database function
     if not cost:
         logger.warning(f"Fixed cost with ID {doc_id} not found.")
         raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found")
@@ -42,13 +45,13 @@ async def get_fixed_cost_by_id(doc_id: int):
     return cost
 
 @router.post("/", response_model=FixedCost, status_code=status.HTTP_201_CREATED, summary="Create a new fixed cost")
-async def create_fixed_cost(fixed_cost: FixedCost):
+async def create_fixed_cost(fixed_cost: FixedCost, db: Session = Depends(get_db)):
     """
     Adds a new fixed cost entry to the database.
     """
     logger.info(f"Attempting to create a new fixed cost: {fixed_cost.description}")
     try:
-        new_cost = database.add_fixed_cost(fixed_cost)
+        new_cost = database.add_fixed_cost(db, fixed_cost)
         logger.info(f"Fixed cost created successfully with ID: {new_cost.doc_id}")
         return new_cost
     except Exception as e:
@@ -56,7 +59,7 @@ async def create_fixed_cost(fixed_cost: FixedCost):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error adding fixed cost: {e}")
 
 @router.put("/{doc_id}", response_model=FixedCost, summary="Update an existing fixed cost by ID")
-async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any]):
+async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Session = Depends(get_db)):
     """
     Updates an existing fixed cost entry by its document ID.
     """
@@ -70,7 +73,7 @@ async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any]):
             logger.warning(f"Invalid payment_method provided for fixed cost update: {updates['payment_method']}")
             raise HTTPException(status_code=400, detail="Invalid payment_method provided")
 
-    success = database.update_fixed_cost(doc_id, updates)
+    success = database.update_fixed_cost(db, doc_id, updates)
     if not success:
         logger.warning(f"Fixed cost with ID {doc_id} not found or update failed.")
         raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found or update failed.")
@@ -83,12 +86,12 @@ async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any]):
     return updated_cost
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a fixed cost by ID")
-async def delete_fixed_cost_api(doc_id: int):
+async def delete_fixed_cost_api(doc_id: int, db: Session = Depends(get_db)):
     """
     Deletes a fixed cost entry by its document ID.
     """
     logger.info(f"Attempting to delete fixed cost with ID: {doc_id}")
-    success = database.delete_fixed_cost(doc_id)
+    success = database.delete_fixed_cost(db, doc_id)
     if not success:
         logger.warning(f"Fixed cost with ID {doc_id} not found or deletion failed.")
         raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found or deletion failed.")

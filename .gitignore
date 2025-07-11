@@ -18,3 +18,7 @@ db.json
 
 # FastAPI/Uvicorn specific temporary files
 .uvicorn_reload_history
+
+*.db
+
+*.env*

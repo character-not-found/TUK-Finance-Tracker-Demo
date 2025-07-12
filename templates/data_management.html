@@ -4,6 +4,8 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/data_management.css') }}">
+<!-- NEW: Link to register_expenses.css for message box styling -->
+<link rel="stylesheet" href="{{ url_for('static', path='css/register_expenses.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -14,33 +16,35 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <h3 class="text-xl font-semibold text-gray-700 mb-4">Search All Records</h3>
         <div class="flex flex-col md:flex-row gap-4">
-            <input type="text" id="globalSearchInput" placeholder="Search by description, recipient, category..."
-                   class="flex-grow shadow appearance-none border rounded-md py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-            <button id="globalSearchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out">
+            {# Input field simplified to use form-field styling #}
+            <div class="form-field flex-grow"> {# Added form-field #}
+                <input type="text" id="globalSearchInput" placeholder="Search by description, recipient, category...">
+            </div>
+            <button id="globalSearchBtn" class="btn-primary-custom">
                 Search
             </button>
         </div>
     </div>
 
-    <!-- Filters Section -->
+    <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h3 class="text-xl font-semibold text-gray-700 mb-4">Filter by Table & Date</h3>
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Filter Records</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="tableSelect" class="block text-gray-700 text-sm font-bold mb-2">Select Table:</label>
-                <select id="tableSelect" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="tableSelect">
                     <option value="daily-expenses">Daily Expenses</option>
                     <option value="fixed-costs">Fixed Costs</option>
                     <option value="income">Income</option>
                 </select>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="yearSelect" class="block text-gray-700 text-sm font-bold mb-2">Year:</label>
-                <select id="yearSelect" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></select>
+                <select id="yearSelect"></select>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="monthSelect" class="block text-gray-700 text-sm font-bold mb-2">Month:</label>
-                <select id="monthSelect" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="monthSelect">
                     <option value="0">All Months</option>
                     <option value="1">January</option>
                     <option value="2">February</option>
@@ -57,17 +61,17 @@
                 </select>
             </div>
         </div>
-        <button id="loadDataBtn" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out w-full">
+        <button id="loadDataBtn" class="mt-6 btn-primary-custom w-full">
             Load Data
         </button>
     </div>
 
-    <!-- Confirmation/Error Message Area -->
-    <div id="messageArea" class="message hidden mb-8"></div>
+    <!-- Message Area (for success/error messages) -->
+    <div id="messageArea" class="message hidden"></div> {# Removed mb-8 as it's handled by margin-bottom in .message CSS #}
 
-    <!-- Data Table Display Area -->
+    <!-- Data Table Section -->
     <div class="bg-white rounded-lg shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4" id="tableDataHeading">Table Data</h3>
+        <h3 id="tableDataHeading" class="text-2xl font-semibold text-gray-800 mb-4 text-center">Table Data</h3>
         <div class="overflow-x-auto">
             <table id="dataTable" class="min-w-full data-table">
                 <thead>

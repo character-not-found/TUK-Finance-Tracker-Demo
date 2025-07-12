@@ -36,17 +36,34 @@
     margin-top: 10px; /* Add margin to separate from legend */
     text-align: center; /* Center the text within the div */
 }
+/* Dark mode for total amount display */
+html.dark .total-amount-display {
+    color: #e2e8f0; /* Light text color */
+    background-color: rgba(45, 55, 72, 0.8); /* Darker transparent background */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 /* Styles for the Net Profit/Loss and Monthly Average display */
 .profit-loss-display {
     font-size: 2.5rem; /* Larger font size for the main value */
     font-weight: bold;
     text-align: center;
 }
+/* Dark mode for profit-loss-display */
+html.dark .profit-loss-display {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+
 .monthly-average-display {
     font-size: 2.5rem; /* Same font size as profit-loss-display for "same weight" */
     font-weight: bold; /* Same font weight as profit-loss-display for "same weight" */
     text-align: center;
 }
+/* Dark mode for monthly-average-display */
+html.dark .monthly-average-display {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+
 /* New style for yearly total display */
 .yearly-total-display {
     font-size: 1.5rem; /* Slightly smaller than monthly profit/loss, but prominent */
@@ -54,6 +71,11 @@
     text-align: center;
     margin-top: 15px; /* Space from the chart above */
 }
+/* Dark mode for yearly-total-display */
+html.dark .yearly-total-display {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+
 /* New style for Cash on Hand display */
 .cash-on-hand-display {
     font-size: 2.5rem; /* Same font size as profit-loss-display */
@@ -63,24 +85,30 @@
     margin-top: 5px; /* Reduced margin to bring closer to title */
     margin-bottom: 0; /* Ensure no extra space below */
 }
+/* Dark mode for cash-on-hand-display */
+html.dark .cash-on-hand-display {
+    color: #f7fafc; /* Lighter text for dark mode */
+}
+
 /* Adjusted style for the title of Cash on Hand */
 .cash-on-hand-display + h3 { /* Selects the h3 immediately preceding .cash-on-hand-display */
     margin-bottom: 5px; /* Reduced margin to bring closer to value */
 }
-/* Dark mode styles */
-html.dark {
-    background-color: #1a202c; /* Dark background for the whole page */
-    color: #e2e8f0; /* Light text color */
+/* Removed redundant dark mode styles for .bg-white, text-gray-800, text-gray-700 */
+/* These are now handled globally in main.css */
+/* html.dark {
+    background-color: #1a202c;
+    color: #e2e8f0;
 }
 html.dark .bg-white {
-    background-color: #2d3748; /* Darker background for cards */
+    background-color: #2d3748;
 }
 html.dark .text-gray-800 {
-    color: #f7fafc; /* Lighter text for dark mode */
+    color: #f7fafc;
 }
 html.dark .text-gray-700 {
-    color: #cbd5e0; /* Lighter text for dark mode */
-}
+    color: #cbd5e0;
+} */
 html.dark .data-table thead th {
     background-color: #4a5568; /* Darker gray header */
     color: #e2e8f0;

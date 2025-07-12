@@ -17,6 +17,10 @@ html.dark body {
 /* Adjusted: Darker background for elements previously bg-white (cards, tables, etc.) */
 html.dark .bg-white {
     background-color: #2d3748; /* Darker background for cards/sections */
+    /* Add consistent card styling from login-container */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); /* Consistent shadow for dark mode cards */
+    /* Removed padding: 40px; to maintain consistency with Tailwind's p-6 (24px) */
 }
 
 /* Adjusted: Specific dark mode styles for text colors */
@@ -54,7 +58,38 @@ html.dark .data-table td {
     color: #e2e8f0;
 }
 
-/* Styles for form fields in dark mode */
+/* Light mode styles for table rows to show separation */
+.data-table tbody tr:nth-child(odd) {
+    background-color: #f9fafb; /* Very light gray for odd rows */
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #ffffff; /* White for even rows */
+}
+/* Ensure default text color for table cells in light mode */
+.data-table td {
+    color: #374151; /* Dark gray text for light mode */
+}
+
+
+/* Styles for form fields (inputs, selects, textareas) */
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field input[type="date"],
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 12px 10px; /* Match login input padding */
+    border: 1px solid #b2dfdb; /* Light border */
+    border-radius: 5px; /* Match login input border-radius */
+    font-size: 16px;
+    box-sizing: border-box; /* Include padding in width */
+    background-color: #ffffff; /* Default light background */
+    color: #263238; /* Default dark text */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); /* Subtle inner shadow */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+/* Dark mode for form field inputs */
 html.dark .form-field input[type="text"],
 html.dark .form-field input[type="number"],
 html.dark .form-field input[type="date"],
@@ -63,7 +98,17 @@ html.dark .form-field textarea {
     background-color: #4a5568; /* Darker input background */
     color: #e2e8f0; /* Light input text */
     border-color: #6b7280; /* Darker border */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); /* Darker inner shadow */
 }
+/* Focus styles for form field inputs */
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: #6366f1; /* Indigo-500 */
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); /* Indigo-200 with opacity */
+    outline: none;
+}
+/* Focus styles for form field inputs in dark mode */
 html.dark .form-field input:focus,
 html.dark .form-field select:focus,
 html.dark .form-field textarea:focus {
@@ -71,35 +116,95 @@ html.dark .form-field textarea:focus {
     box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25); /* Lighter indigo shadow */
 }
 
-/* Button styles for dark mode */
+/* General button styles (for primary actions, mimicking login button) */
+.btn-primary-custom { /* New custom class for primary buttons */
+    background-color: #00796b; /* Login button green */
+    color: white;
+    height: 50px; /* Fixed height */
+    padding: 0 30px; /* Horizontal padding, vertical handled by height */
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    line-height: 50px; /* Vertically center text */
+    text-align: center; /* Horizontally center text */
+}
+.btn-primary-custom:hover {
+    background-color: #004d40; /* Darker green on hover */
+}
+/* Dark mode for custom primary button */
+html.dark .btn-primary-custom {
+    background-color: #4ade80; /* Lighter green for dark mode */
+    color: #1a202c; /* Dark text on light button */
+}
+html.dark .btn-primary-custom:hover {
+    background-color: #22c55e; /* Darker green on hover */
+}
+
+
+/* Existing .btn-primary (Tailwind-based) - keep if used for other styles, or remove if only custom is needed */
+.btn-primary {
+    background-color: #4f46e5; /* Indigo-600 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
 html.dark .btn-primary {
     background-color: #6366f1; /* Lighter indigo for dark mode primary */
 }
-
 html.dark .btn-primary:hover {
     background-color: #4f46e5; /* Even lighter on hover */
 }
 
+/* Other button styles (secondary, danger, edit) */
+.btn-secondary {
+    background-color: #6b7280; /* Gray-500 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
 html.dark .btn-secondary {
     background-color: #9ca3af; /* Lighter gray for dark mode secondary */
 }
-
 html.dark .btn-secondary:hover {
     background-color: #6b7280; /* Darker on hover */
 }
 
+/* Light mode for btn-danger */
+.btn-danger {
+    background-color: #ef4444; /* Red-500 */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
+/* Dark mode for btn-danger */
 html.dark .btn-danger {
     background-color: #f87171; /* Lighter red for dark mode danger */
 }
-
 html.dark .btn-danger:hover {
     background-color: #ef4444; /* Darker on hover */
 }
 
+/* Light mode for btn-edit */
+.btn-edit {
+    background-color: #22c55e; /* Green-500 */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+}
+/* Dark mode for btn-edit */
 html.dark .btn-edit {
     background-color: #4ade80; /* Lighter green for dark mode edit */
 }
-
 html.dark .btn-edit:hover {
     background-color: #22c55e; /* Darker on hover */
 }
@@ -124,3 +229,4 @@ html.dark footer {
 .dropdown:hover .dropdown-menu {
     display: block;
 }
+

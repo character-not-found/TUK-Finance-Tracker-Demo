@@ -16,9 +16,21 @@
     color: #065f46; /* green-800 */
     border: 1px solid #34d399; /* green-400 */
 }
+/* Dark mode for success message */
+html.dark .message.success {
+    background-color: #10b981; /* green-500 */
+    color: #ecfdf5; /* green-50 */
+    border: 1px solid #065f46; /* green-800 */
+}
 
 .message.error {
     background-color: #fee2e2; /* red-100 */
     color: #991b1b; /* red-800 */
     border: 1px solid #f87171; /* red-400 */
+}
+/* Dark mode for error message */
+html.dark .message.error {
+    background-color: #ef4444; /* red-500 */
+    color: #fef2f2; /* red-50 */
+    border: 1px solid #991b1b; /* red-800 */
 }

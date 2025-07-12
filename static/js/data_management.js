@@ -33,14 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     yearSelect.value = currentYear; // Set current year as default
 
-    // Function to show message
+    // Function to show message (kept for error messages, but success messages will be suppressed)
     function showMessage(message, type) {
         messageArea.textContent = message;
-        messageArea.className = `message ${type}`; // Reset classes and add new type
-        messageArea.style.display = 'block';
+        // Clear previous states and add new type
+        messageArea.classList.remove('hidden', 'success', 'error'); // Remove all potential previous state classes
+        messageArea.classList.add('message', type); // Add 'message' base class and the specific 'type' (success/error)
+        messageArea.classList.remove('hidden'); // Ensure it's visible
+
         setTimeout(() => {
-            messageArea.style.display = 'none';
-        }, 5000); // Hide after 5 seconds
+            messageArea.classList.add('hidden'); // Hide after 5 seconds
+        }, 5000); 
     }
 
     // Function to format currency in European style (e.g., 1 234,56 €)
@@ -117,34 +120,99 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let headers = [];
         let dataKeys = [];
+        let headerAlignments = {}; // To store desired alignment for each header
+        let cellAlignments = {};  // To store desired alignment for each cell
 
         if (isSearchMode) {
-            headers = ['ID', 'Source', 'Date', 'Description', 'Amount (€)', 'Payment Method', 'Actions']; // Added Payment Method
-            // We'll dynamically get data based on the item's type
+            headers = ['ID', 'Source', 'Date', 'Description', 'Amount (€)', 'Payment Method', 'Actions'];
+            headerAlignments = {
+                'ID': 'text-center',
+                'Source': 'text-left',
+                'Date': 'text-left',
+                'Description': 'text-left',
+                'Amount (€)': 'text-right',
+                'Payment Method': 'text-center', // Changed to text-center
+                'Actions': 'text-center' // Actions column is always centered
+            };
+            cellAlignments = {
+                'ID': 'text-center',
+                'Source': 'text-left',
+                'Date': 'text-left',
+                'Description': 'text-left',
+                'Amount (€)': 'text-right',
+                'Payment Method': 'text-center', // Changed to text-center
+            };
         } else if (tableType === 'daily-expenses') {
-            headers = ['ID', 'Date', 'Description', 'Category', 'Amount (€)', 'Payment Method', 'Actions']; // Added Payment Method
-            dataKeys = ['doc_id', 'cost_date', 'description', 'category', 'amount', 'payment_method']; // Added payment_method
+            headers = ['ID', 'Date', 'Description', 'Category', 'Amount (€)', 'Payment Method', 'Actions'];
+            dataKeys = ['doc_id', 'cost_date', 'description', 'category', 'amount', 'payment_method'];
+            headerAlignments = {
+                'ID': 'text-center',
+                'Date': 'text-left',
+                'Description': 'text-left',
+                'Category': 'text-left',
+                'Amount (€)': 'text-right',
+                'Payment Method': 'text-center', // Changed to text-center
+                'Actions': 'text-center'
+            };
+            cellAlignments = {
+                'doc_id': 'text-center',
+                'cost_date': 'text-left',
+                'description': 'text-left',
+                'category': 'text-left',
+                'amount': 'text-right',
+                'payment_method': 'text-center', // Changed to text-center
+            };
         } else if (tableType === 'fixed-costs') {
-            headers = ['ID', 'Date', 'Description', 'Type', 'Category', 'Recipient', 'Amount (€)', 'Payment Method', 'Actions']; // Added Payment Method
-            dataKeys = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'amount_eur', 'payment_method']; // Added payment_method
+            headers = ['ID', 'Date', 'Description', 'Type', 'Category', 'Recipient', 'Amount (€)', 'Payment Method', 'Actions'];
+            dataKeys = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'amount_eur', 'payment_method'];
+            headerAlignments = {
+                'ID': 'text-center',
+                'Date': 'text-left',
+                'Description': 'text-left',
+                'Type': 'text-left',
+                'Category': 'text-left',
+                'Recipient': 'text-left',
+                'Amount (€)': 'text-right',
+                'Payment Method': 'text-center', // Changed to text-center
+                'Actions': 'text-center'
+            };
+            cellAlignments = {
+                'doc_id': 'text-center',
+                'cost_date': 'text-left',
+                'description': 'text-left',
+                'cost_frequency': 'text-left',
+                'category': 'text-left',
+                'recipient': 'text-left',
+                'amount_eur': 'text-right',
+                'payment_method': 'text-center', // Changed to text-center
+            };
         } else if (tableType === 'income') {
             headers = ['ID', 'Date', 'Tours (€)', 'Transfers (€)', 'Hours Worked', 'Actions'];
             dataKeys = ['doc_id', 'income_date', 'tours_revenue_eur', 'transfers_revenue_eur', 'hours_worked'];
+            headerAlignments = {
+                'ID': 'text-center',
+                'Date': 'text-left',
+                'Tours (€)': 'text-right',
+                'Transfers (€)': 'text-right',
+                'Hours Worked': 'text-center',
+                'Actions': 'text-center'
+            };
+            cellAlignments = {
+                'doc_id': 'text-center',
+                'income_date': 'text-left',
+                'tours_revenue_eur': 'text-right',
+                'transfers_revenue_eur': 'text-right',
+                'hours_worked': 'text-center',
+            };
         }
 
         // Create table headers
         headers.forEach(headerText => {
             const th = document.createElement('th');
             th.textContent = headerText;
-            // Specific alignment for headers
-            if (headerText === 'Amount (€)') { // This is the combined 'Amount (€)' header in search results and specific tables
-                th.classList.add('text-center');
-            } else if (headerText === 'Source' || headerText === 'Description') { // 'Source' header should be left-aligned
-                th.classList.add('text-left');
-            } else if (headerText.includes('(€)')) { // This applies to 'Tours (€)', 'Transfers (€)' in specific tables
-                th.classList.add('text-right');
-            } else if (headerText === 'Hours Worked' || headerText === 'Actions' || headerText === 'Payment Method') { // Added Payment Method
-                th.classList.add('text-center');
+            const alignmentClass = headerAlignments[headerText];
+            if (alignmentClass) {
+                th.classList.add(alignmentClass);
             }
             thead.appendChild(th);
         });
@@ -153,46 +221,58 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(item => {
             const row = tbody.insertRow();
             if (isSearchMode) {
-                // For search results, we need to adapt what's displayed
                 const sourceTable = item.sourceTable.replace('-', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 const date = formatDateToDDMonthYYYY(item.cost_date || item.income_date);
                 let description = '';
                 let amount = 0;
-                let paymentMethod = '-'; // Default for income, or if not applicable
+                let paymentMethod = '-';
 
                 if (item.sourceTable === 'daily-expenses') {
                     description = item.description;
                     amount = item.amount;
-                    paymentMethod = item.payment_method || '-'; // Use '-' if missing
+                    paymentMethod = item.payment_method || '-';
                 } else if (item.sourceTable === 'fixed-costs') {
                     description = item.description;
                     amount = item.amount_eur;
-                    paymentMethod = item.payment_method || '-'; // Use '-' if missing
+                    paymentMethod = item.payment_method || '-';
                 } else if (item.sourceTable === 'income') {
                     description = `Tours: ${formatCurrency(item.tours_revenue_eur)}, Transfers: ${formatCurrency(item.transfers_revenue_eur)}`;
                     amount = item.tours_revenue_eur + item.transfers_revenue_eur;
-                    // Income doesn't have a payment method in the same way, so it's '-'
                 }
 
-                row.insertCell().textContent = item.doc_id;
-                row.insertCell().textContent = sourceTable;
-                row.insertCell().textContent = date;
-                row.insertCell().textContent = description;
+                // Create cells and apply alignments
+                const idCell = row.insertCell();
+                idCell.classList.add(cellAlignments['ID']);
+                idCell.textContent = item.doc_id;
+
+                const sourceCell = row.insertCell();
+                sourceCell.classList.add(cellAlignments['Source']);
+                sourceCell.textContent = sourceTable;
+
+                const dateCell = row.insertCell();
+                dateCell.classList.add(cellAlignments['Date']);
+                dateCell.textContent = date;
+
+                const descCell = row.insertCell();
+                descCell.classList.add(cellAlignments['Description']);
+                descCell.textContent = description;
+
                 const amountCell = row.insertCell();
-                amountCell.classList.add('text-center'); // Changed to text-center for amount values
+                amountCell.classList.add(cellAlignments['Amount (€)']);
                 amountCell.textContent = formatCurrency(amount);
-                const paymentMethodCell = row.insertCell(); // New cell for payment method
-                paymentMethodCell.classList.add('text-center');
+
+                const paymentMethodCell = row.insertCell();
+                paymentMethodCell.classList.add(cellAlignments['Payment Method']); // Use the specific alignment
                 paymentMethodCell.textContent = paymentMethod;
 
                 // Add Action buttons for search results
                 const actionCell = row.insertCell();
-                actionCell.classList.add('actions');
+                actionCell.classList.add('actions'); // Keep 'actions' class for specific button styling
                 const editBtn = document.createElement('button');
                 editBtn.textContent = 'Edit';
                 editBtn.classList.add('btn-edit');
                 editBtn.dataset.docId = item.doc_id;
-                editBtn.dataset.tableType = item.sourceTable; // Use sourceTable for editing
+                editBtn.dataset.tableType = item.sourceTable;
                 editBtn.addEventListener('click', openEditModal);
                 actionCell.appendChild(editBtn);
 
@@ -200,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.classList.add('btn-danger');
                 deleteBtn.dataset.docId = item.doc_id;
-                deleteBtn.dataset.tableType = item.sourceTable; // Use sourceTable for deleting
+                deleteBtn.dataset.tableType = item.sourceTable;
                 deleteBtn.addEventListener('click', handleDeleteRow);
                 actionCell.appendChild(deleteBtn);
 
@@ -209,26 +289,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 dataKeys.forEach(key => {
                     const cell = row.insertCell();
                     let value = item[key];
+                    // Retrieve alignment from cellAlignments based on the key
+                    let alignmentClass = cellAlignments[key] || 'text-left'; // Default to left-aligned if not specified
 
                     if (key.includes('amount') || key.includes('revenue') || key.includes('eur')) {
-                        cell.classList.add('text-center'); // Changed to text-center for amount values
                         value = formatCurrency(value);
                     } else if (key === 'cost_date' || key === 'income_date') {
                         value = formatDateToDDMonthYYYY(value);
-                    } else if (key === 'hours_worked') {
-                        cell.classList.add('text-center');
-                    } else if (key === 'payment_method') { // Handle payment_method explicitly
-                        cell.classList.add('text-center');
-                        value = value || '-'; // Use '-' if missing
-                    } else if (key === 'category' || key === 'cost_frequency') {
-                        value = value ? value.replace(/_/g, ' ') : '-';
+                    } else if (key === 'payment_method' || key === 'category' || key === 'cost_frequency' || key === 'recipient') {
+                        value = value ? value.replace(/_/g, ' ') : '-'; // Replace underscores for display
                     }
+
+                    cell.classList.add(alignmentClass);
                     cell.textContent = value !== null && value !== undefined ? value : '-';
                 });
 
                 // Add Action buttons
                 const actionCell = row.insertCell();
-                actionCell.classList.add('actions');
+                actionCell.classList.add('actions'); // Keep 'actions' class for specific button styling
                 const editBtn = document.createElement('button');
                 editBtn.textContent = 'Edit';
                 editBtn.classList.add('btn-edit');
@@ -289,11 +367,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Explicitly add sourceTable to each item for consistency with search results
-            // This is the key fix for "Entry not found for editing"
             currentTableData = data.map(item => ({ ...item, sourceTable: selectedTable }));
 
             renderTable(currentTableData, selectedTable, false); // Pass false for isSearchMode
-            showMessage(`Data for ${tableSelect.options[tableSelect.selectedIndex].text} loaded successfully.`, 'success');
+            // showMessage(`Data for ${tableSelect.options[tableSelect.selectedIndex].text} loaded successfully.`, 'success'); // REMOVED: Suppress success message
         } catch (error) {
             console.error('Error loading table data:', error);
             showMessage(`Error loading data: ${error.message}`, 'error');
@@ -358,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentTableData = allResults; // Store search results for editing
             renderTable(allResults, null, true); // Pass true for isSearchMode
-            showMessage(`Search completed. Found ${allResults.length} results.`, 'success');
+            // showMessage(`Search completed. Found ${allResults.length} results.`, 'success'); // REMOVED: Suppress success message
 
         } catch (error) {
             console.error('Error during global search:', error);
@@ -389,28 +466,28 @@ document.addEventListener('DOMContentLoaded', () => {
         let fields = [];
         if (tableType === 'daily-expenses') {
             fields = [
-                { id: 'editDailyAmount', name: 'amount', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount },
-                { id: 'editDailyDescription', name: 'description', label: 'Description', type: 'text', value: entry.description },
-                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'] },
-                { id: 'editDailyCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date },
-                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'] } // Added Payment Method
+                { id: 'editDailyAmount', name: 'amount', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount, required: true },
+                { id: 'editDailyDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
+                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'], required: true },
+                { id: 'editDailyCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
+                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
             ];
         } else if (tableType === 'fixed-costs') {
             fields = [
-                { id: 'editFixedAmountEur', name: 'amount_eur', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount_eur },
-                { id: 'editFixedDescription', name: 'description', label: 'Description', type: 'text', value: entry.description },
-                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['Annual', 'Monthly', 'One-Off', 'Initial Investment'] },
-                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'] },
-                { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient },
-                { id: 'editFixedCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date },
-                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'] } // Added Payment Method
+                { id: 'editFixedAmountEur', name: 'amount_eur', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount_eur, required: true },
+                { id: 'editFixedDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
+                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['Annual', 'Monthly', 'One-Off', 'Initial Investment'], required: true },
+                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'], required: true },
+                { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient, required: false }, // THIS IS THE KEY CHANGE
+                { id: 'editFixedCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
+                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
             ];
         } else if (tableType === 'income') {
             fields = [
-                { id: 'editIncomeDate', name: 'income_date', label: 'Date', type: 'date', value: entry.income_date },
-                { id: 'editToursRevenue', name: 'tours_revenue_eur', label: 'Tours Revenue (€)', type: 'number', step: '0.01', min: '0', value: entry.tours_revenue_eur },
-                { id: 'editTransfersRevenue', name: 'transfers_revenue_eur', label: 'Transfers Revenue (€)', type: 'number', step: '0.01', min: '0', value: entry.transfers_revenue_eur },
-                { id: 'editHoursWorked', name: 'hours_worked', label: 'Hours Worked', type: 'number', step: '0.01', min: '0', value: entry.hours_worked }
+                { id: 'editIncomeDate', name: 'income_date', label: 'Date', type: 'date', value: entry.income_date, required: true },
+                { id: 'editToursRevenue', name: 'tours_revenue_eur', label: 'Tours Revenue (€)', type: 'number', step: '0.01', min: '0', value: entry.tours_revenue_eur, required: true },
+                { id: 'editTransfersRevenue', name: 'transfers_revenue_eur', label: 'Transfers Revenue (€)', type: 'number', step: '0.01', min: '0', value: entry.transfers_revenue_eur, required: true },
+                { id: 'editHoursWorked', name: 'hours_worked', label: 'Hours Worked', type: 'number', step: '0.01', min: '0', value: entry.hours_worked, required: true }
             ];
         }
 
@@ -426,14 +503,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const select = document.createElement('select');
                 select.id = field.id;
                 select.name = field.name;
-                select.required = true;
-                select.classList.add('shadow', 'appearance-none', 'border', 'rounded-md', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'focus:ring-2', 'focus:ring-indigo-500', 'focus:border-transparent');
+                // Use field.required if defined, otherwise default to true for selects that are usually required
+                select.required = field.required !== undefined ? field.required : true; // Adjusted for selects
                 
                 // Add a default "Select..." option if the field is a payment method
-                if (field.name === 'payment_method') {
+                if (field.name === 'payment_method' || field.name === 'category' || field.name === 'cost_frequency') { // Also for category and cost_frequency
                     const defaultOption = document.createElement('option');
                     defaultOption.value = ""; // Empty value
-                    defaultOption.textContent = "Select payment method";
+                    defaultOption.textContent = `Select ${field.label.replace(':', '')}`; // Dynamic text
                     select.appendChild(defaultOption);
                 }
 
@@ -452,8 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.name = field.name;
                 input.type = field.type;
                 input.value = entry[field.name]; // Use entry[field.name] to get the correct value
-                input.required = true;
-                input.classList.add('shadow', 'appearance-none', 'border', 'rounded-md', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'focus:ring-2', 'focus:ring-indigo-500', 'focus:border-transparent');
+                // Use field.required if defined, otherwise default to true for inputs that are usually required
+                input.required = field.required !== undefined ? field.required : true; // Adjusted for inputs
                 if (field.type === 'number') {
                     input.step = field.step;
                     input.min = field.min;
@@ -469,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to close the modal
     function closeModal() {
         entryModal.style.display = 'none';
-        messageArea.style.display = 'none'; // Clear any messages in the main area
+        // Removed: messageArea.style.display = 'none'; // This line was causing the issue
     }
 
     // Handle Save Changes
@@ -498,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                showMessage('Entry updated successfully!', 'success');
+                showMessage('Entry updated successfully!', 'success'); // This line is correct
                 closeModal();
                 // After update, if we were in search mode, re-search, otherwise reload filtered data
                 if (globalSearchInput.value.trim()) {

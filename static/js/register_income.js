@@ -2,14 +2,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const incomeForm = document.getElementById('incomeForm');
     const confirmationMessage = document.getElementById('confirmationMessage');
 
-    // Function to show message
+    // Function to display messages
     function showMessage(message, type) {
         confirmationMessage.textContent = message;
-        confirmationMessage.className = `message ${type}`; // Reset classes and add new type
-        confirmationMessage.style.display = 'block';
+        // Ensure all previous state classes are removed before adding new ones
+        confirmationMessage.classList.remove('hidden', 'success', 'error');
+        // Add the base 'message' class and the specific 'type' (success/error)
+        confirmationMessage.classList.add('message', type);
+        // Remove 'hidden' to make the message visible
+        confirmationMessage.classList.remove('hidden');
+
+        // Hide message after 5 seconds by adding the 'hidden' class back
         setTimeout(() => {
-            confirmationMessage.style.display = 'none';
-        }, 5000); // Hide after 5 seconds
+            confirmationMessage.classList.add('hidden');
+        }, 5000);
     }
 
     // Set current date as default for date input
@@ -24,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const incomeDate = document.getElementById('incomeDate').value;
         const toursRevenue = parseFloat(document.getElementById('toursRevenue').value);
         const transfersRevenue = parseFloat(document.getElementById('transfersRevenue').value);
-        const hoursWorked = parseFloat(document.getElementById('hoursWorked').value); // Re-added
+        const hoursWorked = parseFloat(document.getElementById('hoursWorked').value);
 
         if (incomeDate === '' || isNaN(toursRevenue) || isNaN(transfersRevenue) || isNaN(hoursWorked) || toursRevenue < 0 || transfersRevenue < 0 || hoursWorked < 0) {
             showMessage('Please fill in all fields correctly for Income (amounts and hours must be non-negative).', 'error');
@@ -35,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             income_date: incomeDate,
             tours_revenue_eur: toursRevenue,
             transfers_revenue_eur: transfersRevenue,
-            hours_worked: hoursWorked // Re-added
+            hours_worked: hoursWorked
         };
 
         try {

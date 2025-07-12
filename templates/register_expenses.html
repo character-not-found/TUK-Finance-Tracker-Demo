@@ -12,9 +12,9 @@
     <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Register New Expense</h2>
 
     <!-- Expense Type Selection -->
-    <div class="mb-6">
+    <div class="mb-6 form-field"> {# Added form-field #}
         <label for="expenseType" class="block text-gray-700 text-sm font-bold mb-2">Select Expense Type:</label>
-        <select id="expenseType" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        <select id="expenseType">
             <option value="daily">Daily Expense</option>
             <option value="fixed">Fixed Cost</option>
         </select>
@@ -27,20 +27,17 @@
     <div id="dailyExpenseFormSection" class="form-section">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Daily Expense Details</h3>
         <form id="dailyExpenseForm" class="space-y-4">
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="dailyAmount" class="block text-gray-700 text-sm font-bold mb-2">Amount (€):</label>
-                <input type="number" id="dailyAmount" name="amount" step="0.01" min="0" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="number" id="dailyAmount" name="amount" step="0.01" min="0" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="dailyDescription" class="block text-gray-700 text-sm font-bold mb-2">Description:</label>
-                <input type="text" id="dailyDescription" name="description" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="text" id="dailyDescription" name="description" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="dailyCategory" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
-                <select id="dailyCategory" name="category" required
-                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="dailyCategory" name="category" required>
                     <option value="">Select a category</option>
                     <option value="Garage">Garage</option>
                     <option value="Tuk Maintenance">Tuk Maintenance</option>
@@ -54,22 +51,20 @@
                     <option value="Marketing">Marketing</option>
                 </select>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="dailyCostDate" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                <input type="date" id="dailyCostDate" name="cost_date" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="date" id="dailyCostDate" name="cost_date" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="dailyPaymentMethod" class="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
-                <select id="dailyPaymentMethod" name="payment_method" required
-                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="dailyPaymentMethod" name="payment_method" required>
                     <option value="">Select payment method</option>
                     <option value="Cash">Cash</option>
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Debit Card">Debit Card</option>
                 </select>
             </div>
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out w-full">
+            <button type="submit" class="btn-primary-custom w-full">
                 Register Daily Expense
             </button>
         </form>
@@ -79,20 +74,17 @@
     <div id="fixedCostFormSection" class="form-section hidden">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Fixed Cost Details</h3>
         <form id="fixedCostForm" class="space-y-4">
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedAmountEur" class="block text-gray-700 text-sm font-bold mb-2">Amount (€):</label>
-                <input type="number" id="fixedAmountEur" name="amount_eur" step="0.01" min="0" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="number" id="fixedAmountEur" name="amount_eur" step="0.01" min="0" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedDescription" class="block text-gray-700 text-sm font-bold mb-2">Description:</label>
-                <input type="text" id="fixedDescription" name="description" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="text" id="fixedDescription" name="description" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedCostFrequency" class="block text-gray-700 text-sm font-bold mb-2">Cost Type:</label>
-                <select id="fixedCostFrequency" name="cost_frequency" required
-                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="fixedCostFrequency" name="cost_frequency" required>
                     <option value="">Select cost type</option>
                     <option value="Annual">Annual</option>
                     <option value="Monthly">Monthly</option>
@@ -100,10 +92,9 @@
                     <option value="Initial Investment">Initial Investment</option>
                 </select>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedCategory" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
-                <select id="fixedCategory" name="category" required
-                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="fixedCategory" name="category" required>
                     <option value="">Select a category</option>
                     <option value="Garage">Garage</option>
                     <option value="Tuk Maintenance">Tuk Maintenance</option>
@@ -117,27 +108,24 @@
                     <option value="Marketing">Marketing</option>
                 </select>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedRecipient" class="block text-gray-700 text-sm font-bold mb-2">Recipient (Optional):</label>
-                <input type="text" id="fixedRecipient" name="recipient"
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="text" id="fixedRecipient" name="recipient">
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedCostDate" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                <input type="date" id="fixedCostDate" name="cost_date" required
-                       class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="date" id="fixedCostDate" name="cost_date" required>
             </div>
-            <div>
+            <div class="form-field"> {# Added form-field #}
                 <label for="fixedPaymentMethod" class="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
-                <select id="fixedPaymentMethod" name="payment_method" required
-                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <select id="fixedPaymentMethod" name="payment_method" required>
                     <option value="">Select payment method</option>
                     <option value="Cash">Cash</option>
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Debit Card">Debit Card</option>
                 </select>
             </div>
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out w-full">
+            <button type="submit" class="btn-primary-custom w-full">
                 Register Fixed Cost
             </button>
         </form>

@@ -20,6 +20,14 @@ logger = logging.getLogger(__name__)
 
 class ForceHTTPSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "DEBUG: Incoming Request Headers",
+                "headers": dict(request.headers),
+                "initial_scheme": request.url.scheme
+            }
+        )
         # Log all incoming request headers
         logger.info(f"Incoming request headers: {dict(request.headers)}")
         # Log the scheme of the request URL *before* modification

@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Cash-On-Hand Business Manager Demo API",
     description="API for managing business expenses, costs, and income in a demo environment.",
-    version="1.0.0"
+    version="1.0.0",
+    forwarded_allow_ips=["*"]
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -100,7 +101,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                 expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
                 httponly=True,
                 samesite="lax",
-                secure=False,
+                secure=True,
                 path="/"
             )
             return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
@@ -125,7 +126,7 @@ async def logout(response: Response):
         expires=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
         httponly=True,
         samesite="lax",
-        secure=False,
+        secure=True,
         path="/"
     )
     return {"message": "Logged out successfully"}

@@ -1,18 +1,14 @@
 # docker-compose.yml
-version: '3.8'
-
 services:
   # Your FastAPI application service (renamed from web-demo to app)
-  app:
+  web-demo:
     build:
       context: . # Build context is the current directory (where Dockerfile is)
-      dockerfile: Dockerfile # Path to the Dockerfile
-    
+      dockerfile: Dockerfile # Path to the Dockerfile   
     # IMPORTANT: Remove the 'ports' mapping here. Caddy will handle external exposure.
     # Instead, 'expose' the internal port for Caddy to access.
     expose:
-      - "11000" # Expose the internal port your app listens on (as defined in Dockerfile CMD)
-
+      - "12000" # Expose the internal port your app listens on (as defined in Dockerfile CMD)
     volumes:
       # Mount the current directory into the container's /app directory
       # This allows for live code changes during development (if --reload is used)
@@ -45,24 +41,20 @@ services:
   # New Caddy Reverse Proxy service
   caddy:
     image: caddy:latest # Use the official Caddy Docker image
-    restart: unless-stopped # Automatically restart Caddy if it crashes
-    
+    restart: unless-stopped # Automatically restart Caddy if it crashes   
     # Map host ports 80 and 443 to Caddy's container ports.
     # Caddy will listen on these ports for incoming HTTP and HTTPS requests.
     ports:
       - "80:80"   # HTTP port (for redirects and Let's Encrypt challenges)
       - "443:443" # HTTPS port (for secure traffic)
-    
     # Mount your Caddyfile into the container's default config location
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro # Mount your custom Caddyfile (read-only)
       - caddy_data:/data                    # Volume for Caddy to store SSL certificates and other data
       - caddy_config:/config                # Volume for Caddy's configuration (internal state)
-
     # Ensures the 'app' service starts before Caddy tries to proxy to it.
     depends_on:
-      - app 
-    
+      - web-demo 
     networks:
       - demo_network # Connect Caddy to the same network as the 'app'
 

@@ -36,11 +36,11 @@ COPY . .
 RUN mkdir -p /logs
 
 # Expose the port that FastAPI will run on
-EXPOSE 11000
+EXPOSE 12000
 
 # Define the command to run your application using Uvicorn
 # 'main:app' refers to the 'app' object in 'main.py'
 # --host 0.0.0.0 makes the server accessible from outside the container
 # --port 9000 specifies the port
 # --reload is good for development, but remove it for production for better performance
-CMD ["uvicorn", "app.api.routes:app", "--host", "0.0.0.0", "--port", "11000"]
+CMD ["uvicorn", "app.api.routes:app", "--host", "0.0.0.0", "--port", "12000"]

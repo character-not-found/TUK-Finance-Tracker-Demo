@@ -1,22 +1,18 @@
 # app/api/routers/summary.py
-from fastapi import APIRouter, Query as FastAPIQuery
+from fastapi import APIRouter, Query as FastAPIQuery, Depends
 from typing import Dict, Any
 from datetime import datetime, timedelta
-import logging # Import logging
-from sqlalchemy.orm import Session # Import Session
-from fastapi import Depends # Ensure Depends is imported
-from app.database import get_db # Import the database dependency
+import logging
+from sqlalchemy.orm import Session
 
-# Relative import from the 'app' package
-from ... import database
-from ...models import CostFrequency, CashOnHand # Import CostFrequency enum and CashOnHand model
+from app import database
+from app.database import get_db
+from app.models import CostFrequency, CashOnHand
 
-# Get a logger for this router
 logger = logging.getLogger(__name__)
 
-# Create an API router specific to summary data
 router = APIRouter(
-    prefix="/summary", # All routes in this router will start with /summary
+    prefix="/summary",
     tags=["Summaries"],
 )
 

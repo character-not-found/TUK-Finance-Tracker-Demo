@@ -1,55 +1,46 @@
-<!-- templates/dashboard_content.html -->
 {% extends 'home.html' %}
 
 {% block title %}Dashboard - Finance Tracker{% endblock %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard_content.css') }}">
-    <!-- Chart.js CDN for graphics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    <!-- Chart.js Datalabels Plugin for showing percentages on slices -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 {% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Business Overview</h2> <!-- Changed title to "Overview" -->
+    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Business Overview</h2>
 
-    <!-- Grid for Diagrams and Graphics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <!-- Monthly Expense Categories Chart (now titled Monthly Expenses) -->
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Expenses</h3> <!-- Changed title -->
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Expenses</h3>
             <div class="chart-container">
-                <canvas id="monthlyExpenseCategoriesPieChart"></canvas> <!-- ID remains, but content is expenses -->
+                <canvas id="monthlyExpenseCategoriesPieChart"></canvas>
                 <p id="noMonthlyExpenseCategoriesPieChart" class="text-gray-500 text-center py-2 hidden">No monthly expense categories data.</p>
             </div>
-            <!-- Total display for Monthly Expenses -->
             <div id="totalMonthlyExpensesDisplay" class="total-amount-display hidden"></div>
         </div>
 
-        <!-- Monthly Income Chart (now a Pie Chart) -->
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
             <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Income</h3>
             <div class="chart-container">
                 <canvas id="monthlyIncomeChart"></canvas>
             </div>
             <p id="noMonthlyIncomeChart" class="text-gray-500 text-center py-2 hidden">No monthly income data.</p>
-            <!-- Total display for Monthly Income -->
             <div id="totalMonthlyIncomeDisplay" class="total-amount-display hidden"></div>
         </div>
 
-        <!-- Net Profit/Loss, Monthly Average, and Cash on Hand Display -->
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center gap-y-4 min-h-[250px]">
-            <div> <!-- Container for Net Profit/Loss title and value -->
+            <div>
                 <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Net Profit/Loss</h3>
                 <div id="netProfitLossDisplay" class="profit-loss-display"></div>
             </div>
-            <div> <!-- Container for Monthly Average title and value -->
+            <div>
                 <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Average</h3>
                 <div id="monthlyAverageValueDisplay" class="monthly-average-display"></div>
             </div>
-            <div> <!-- New Container for Cash on Hand -->
+            <div>
                 <h3 class="text-xl font-semibold text-gray-700 text-center">Cash On Hand</h3>
                 <div id="cashOnHandDisplay" class="cash-on-hand-display"></div>
             </div>
@@ -57,23 +48,18 @@
         </div>
     </div>
 
-    <!-- Global Summary Chart (now spans three columns and is titled "Summary") -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:col-span-3 gap-6 mb-12">
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center lg:col-span-3">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Summary</h3> <!-- Changed title -->
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Summary</h3>
             <div class="chart-container">
-                <canvas id="globalSummaryChart"></canvas> <!-- Changed ID to globalSummaryChart -->
+                <canvas id="globalSummaryChart"></canvas>
             </div>
             <p id="noGlobalSummaryChart" class="text-gray-500 text-center py-2 hidden">No global summary data.</p>
-            <!-- Total display for Global Summary -->
-            <div id="totalGlobalSummaryDisplay" class="yearly-total-display hidden"></div> <!-- Changed ID to totalGlobalSummaryDisplay -->
+            <div id="totalGlobalSummaryDisplay" class="yearly-total-display hidden"></div>
         </div>
     </div>
 
-
-    <!-- Data Tables Section -->
     <div class="grid grid-cols-1 gap-8">
-        <!-- Income Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Income</h3>
             <div class="overflow-x-auto">
@@ -96,7 +82,6 @@
             </div>
         </div>
 
-        <!-- Daily Expenses Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Daily Expenses</h3>
             <div class="overflow-x-auto">
@@ -118,7 +103,6 @@
             </div>
         </div>
 
-        <!-- Fixed Costs Table -->
         <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Fixed Costs</h3>
             <div class="overflow-x-auto">

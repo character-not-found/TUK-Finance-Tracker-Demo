@@ -6,10 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataTable = document.getElementById('dataTable');
     const noDataMessage = document.getElementById('noDataMessage');
     const messageArea = document.getElementById('messageArea');
-    const tableDataHeading = document.getElementById('tableDataHeading'); // New: for dynamic heading
+    const tableDataHeading = document.getElementById('tableDataHeading');
 
-    const globalSearchInput = document.getElementById('globalSearchInput'); // New
-    const globalSearchBtn = document.getElementById('globalSearchBtn');     // New
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const globalSearchBtn = document.getElementById('globalSearchBtn');
 
     const entryModal = document.getElementById('entryModal');
     const closeButton = document.querySelector('.close-button');
@@ -21,32 +21,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteBtn = document.getElementById('deleteBtn');
     const saveBtn = document.getElementById('saveBtn');
 
-    let currentTableData = []; // To store the fetched data for editing
+    let currentTableData = [];
 
-    // Populate Year Select
     const currentYear = new Date().getFullYear();
-    for (let i = currentYear; i >= 2020; i--) { // Adjust range as needed
+    for (let i = currentYear; i >= 2020; i--) {
         const option = document.createElement('option');
         option.value = i;
         option.textContent = i;
         yearSelect.appendChild(option);
     }
-    yearSelect.value = currentYear; // Set current year as default
+    yearSelect.value = currentYear;
 
-    // Function to show message (kept for error messages, but success messages will be suppressed)
     function showMessage(message, type) {
         messageArea.textContent = message;
-        // Clear previous states and add new type
-        messageArea.classList.remove('hidden', 'success', 'error'); // Remove all potential previous state classes
-        messageArea.classList.add('message', type); // Add 'message' base class and the specific 'type' (success/error)
-        messageArea.classList.remove('hidden'); // Ensure it's visible
+        messageArea.classList.remove('hidden', 'success', 'error');
+        messageArea.classList.add('message', type);
+        messageArea.classList.remove('hidden');
 
         setTimeout(() => {
-            messageArea.classList.add('hidden'); // Hide after 5 seconds
-        }, 5000); 
+            messageArea.classList.add('hidden');
+        }, 5000);
     }
 
-    // Function to format currency in European style (e.g., 1 234,56 €)
     function formatCurrency(value) {
         if (typeof value !== 'number' || isNaN(value)) return '0.00 €';
         return new Intl.NumberFormat('fr-FR', {
@@ -56,15 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(value);
     }
 
-    // Function to format date from YYYY-MM-DD to DD Month YYYY
     function formatDateToDDMonthYYYY(dateString) {
         if (!dateString) return '-';
-        const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to ensure UTC interpretation
+        const date = new Date(dateString + 'T00:00:00');
         const options = { day: '2-digit', month: 'long', year: 'numeric' };
         return date.toLocaleDateString('en-US', options);
     }
 
-    // Centralized function to perform the delete operation
     async function performDelete(docId, tableType) {
         try {
             const response = await fetch(`/${tableType}/${docId}`, {
@@ -73,41 +67,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 showMessage('Entry deleted successfully!', 'success');
-                // After delete, if we were in search mode, re-search, otherwise reload filtered data
                 if (globalSearchInput.value.trim()) {
                     performGlobalSearch();
                 } else {
                     loadTableData();
                 }
-                return true; // Indicate success
+                return true;
             } else {
                 const errorData = await response.json();
                 showMessage(`Error deleting entry: ${errorData.detail || response.statusText}`, 'error');
                 console.error('Error deleting entry:', errorData);
-                return false; // Indicate failure
+                return false;
             }
         } catch (error) {
             showMessage(`Network error: ${error.message}`, 'error');
             console.error('Network error during delete:', error);
-            return false; // Indicate failure
+            return false;
         }
     }
 
-    // Handler for delete buttons in table rows
+    // Custom confirmation modal elements
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmYesBtn = document.getElementById('confirmYes');
+    const confirmNoBtn = document.getElementById('confirmNo');
+
+    let confirmAction = null; // Stores the function to call on 'Yes'
+
+    function showConfirmModal(message, onConfirm) {
+        confirmMessage.textContent = message;
+        confirmAction = onConfirm;
+        confirmModal.style.display = 'flex'; // Show the modal
+    }
+
+    function hideConfirmModal() {
+        confirmModal.style.display = 'none';
+        confirmAction = null;
+    }
+
+    confirmYesBtn.addEventListener('click', () => {
+        if (confirmAction) {
+            confirmAction(true);
+        }
+        hideConfirmModal();
+    });
+
+    confirmNoBtn.addEventListener('click', () => {
+        if (confirmAction) {
+            confirmAction(false);
+        }
+        hideConfirmModal();
+    });
+
+    // Replace direct `confirm()` calls with `showConfirmModal`
     function handleDeleteRow(event) {
         const docId = event.target.dataset.docId;
         const tableType = event.target.dataset.tableType;
-        if (confirm('Are you sure you want to delete this entry?')) {
-            performDelete(docId, tableType);
-        }
+        showConfirmModal('Are you sure you want to delete this entry?', async (confirmed) => {
+            if (confirmed) {
+                await performDelete(docId, tableType);
+            }
+        });
     }
 
-    // Function to render table data
     function renderTable(data, tableType, isSearchMode = false) {
         const thead = dataTable.querySelector('thead tr');
         const tbody = dataTable.querySelector('tbody');
-        thead.innerHTML = ''; // Clear existing headers
-        tbody.innerHTML = ''; // Clear existing data
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
 
         if (data.length === 0) {
             noDataMessage.classList.remove('hidden');
@@ -120,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let headers = [];
         let dataKeys = [];
-        let headerAlignments = {}; // To store desired alignment for each header
-        let cellAlignments = {};  // To store desired alignment for each cell
+        let headerAlignments = {};
+        let cellAlignments = {};
 
         if (isSearchMode) {
             headers = ['ID', 'Source', 'Date', 'Description', 'Amount (€)', 'Payment Method', 'Actions'];
@@ -131,8 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Date': 'text-left',
                 'Description': 'text-left',
                 'Amount (€)': 'text-right',
-                'Payment Method': 'text-center', // Changed to text-center
-                'Actions': 'text-center' // Actions column is always centered
+                'Payment Method': 'text-center',
+                'Actions': 'text-center'
             };
             cellAlignments = {
                 'ID': 'text-center',
@@ -140,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Date': 'text-left',
                 'Description': 'text-left',
                 'Amount (€)': 'text-right',
-                'Payment Method': 'text-center', // Changed to text-center
+                'Payment Method': 'text-center',
             };
         } else if (tableType === 'daily-expenses') {
             headers = ['ID', 'Date', 'Description', 'Category', 'Amount (€)', 'Payment Method', 'Actions'];
@@ -151,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Description': 'text-left',
                 'Category': 'text-left',
                 'Amount (€)': 'text-right',
-                'Payment Method': 'text-center', // Changed to text-center
+                'Payment Method': 'text-center',
                 'Actions': 'text-center'
             };
             cellAlignments = {
@@ -160,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'description': 'text-left',
                 'category': 'text-left',
                 'amount': 'text-right',
-                'payment_method': 'text-center', // Changed to text-center
+                'payment_method': 'text-center',
             };
         } else if (tableType === 'fixed-costs') {
             headers = ['ID', 'Date', 'Description', 'Type', 'Category', 'Recipient', 'Amount (€)', 'Payment Method', 'Actions'];
@@ -173,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Category': 'text-left',
                 'Recipient': 'text-left',
                 'Amount (€)': 'text-right',
-                'Payment Method': 'text-center', // Changed to text-center
+                'Payment Method': 'text-center',
                 'Actions': 'text-center'
             };
             cellAlignments = {
@@ -184,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'category': 'text-left',
                 'recipient': 'text-left',
                 'amount_eur': 'text-right',
-                'payment_method': 'text-center', // Changed to text-center
+                'payment_method': 'text-center',
             };
         } else if (tableType === 'income') {
             headers = ['ID', 'Date', 'Tours (€)', 'Transfers (€)', 'Hours Worked', 'Actions'];
@@ -206,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Create table headers
         headers.forEach(headerText => {
             const th = document.createElement('th');
             th.textContent = headerText;
@@ -217,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
             thead.appendChild(th);
         });
 
-        // Populate table body
         data.forEach(item => {
             const row = tbody.insertRow();
             if (isSearchMode) {
@@ -240,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     amount = item.tours_revenue_eur + item.transfers_revenue_eur;
                 }
 
-                // Create cells and apply alignments
                 const idCell = row.insertCell();
                 idCell.classList.add(cellAlignments['ID']);
                 idCell.textContent = item.doc_id;
@@ -262,12 +286,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 amountCell.textContent = formatCurrency(amount);
 
                 const paymentMethodCell = row.insertCell();
-                paymentMethodCell.classList.add(cellAlignments['Payment Method']); // Use the specific alignment
+                paymentMethodCell.classList.add(cellAlignments['Payment Method']);
                 paymentMethodCell.textContent = paymentMethod;
 
-                // Add Action buttons for search results
                 const actionCell = row.insertCell();
-                actionCell.classList.add('actions'); // Keep 'actions' class for specific button styling
+                actionCell.classList.add('actions');
                 const editBtn = document.createElement('button');
                 editBtn.textContent = 'Edit';
                 editBtn.classList.add('btn-edit');
@@ -285,28 +308,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 actionCell.appendChild(deleteBtn);
 
             } else {
-                // Existing logic for single table view
                 dataKeys.forEach(key => {
                     const cell = row.insertCell();
                     let value = item[key];
-                    // Retrieve alignment from cellAlignments based on the key
-                    let alignmentClass = cellAlignments[key] || 'text-left'; // Default to left-aligned if not specified
+                    let alignmentClass = cellAlignments[key] || 'text-left';
 
                     if (key.includes('amount') || key.includes('revenue') || key.includes('eur')) {
                         value = formatCurrency(value);
                     } else if (key === 'cost_date' || key === 'income_date') {
                         value = formatDateToDDMonthYYYY(value);
                     } else if (key === 'payment_method' || key === 'category' || key === 'cost_frequency' || key === 'recipient') {
-                        value = value ? value.replace(/_/g, ' ') : '-'; // Replace underscores for display
+                        value = value ? value.replace(/_/g, ' ') : '-';
                     }
 
                     cell.classList.add(alignmentClass);
                     cell.textContent = value !== null && value !== undefined ? value : '-';
                 });
 
-                // Add Action buttons
                 const actionCell = row.insertCell();
-                actionCell.classList.add('actions'); // Keep 'actions' class for specific button styling
+                actionCell.classList.add('actions');
                 const editBtn = document.createElement('button');
                 editBtn.textContent = 'Edit';
                 editBtn.classList.add('btn-edit');
@@ -326,25 +346,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to fetch and display data (for filter section)
     async function loadTableData() {
         const selectedTable = tableSelect.value;
         const selectedYear = yearSelect.value;
-        const selectedMonth = monthSelect.value; // 0 for all months
+        const selectedMonth = monthSelect.value;
 
         let endpoint = `/${selectedTable}/`;
         try {
-            const response = await fetch(endpoint); // Fetch all data for the selected table type
+            const response = await fetch(endpoint);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             let data = await response.json();
 
-            // Filter data by year and month (client-side)
             data = data.filter(item => {
-                const itemDate = new Date((item.cost_date || item.income_date) + 'T00:00:00'); // Ensure consistent date parsing
+                const itemDate = new Date((item.cost_date || item.income_date) + 'T00:00:00');
                 const itemYear = itemDate.getFullYear();
-                const itemMonth = itemDate.getMonth() + 1; // 1-indexed month
+                const itemMonth = itemDate.getMonth() + 1;
 
                 const yearMatch = itemYear == selectedYear;
                 const monthMatch = (selectedMonth === '0' || itemMonth == selectedMonth);
@@ -352,33 +370,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 return yearMatch && monthMatch;
             });
 
-            // Sort data: primary by date (desc), secondary by doc_id (desc)
             data.sort((a, b) => {
-                const dateA = new Date((a.cost_date || a.income_date) + 'T00:00:00'); // Ensure consistent date parsing
-                const dateB = new Date((b.cost_date || b.income_date) + 'T00:00:00'); // Ensure consistent date parsing
+                const dateA = new Date((a.cost_date || a.income_date) + 'T00:00:00');
+                const dateB = new Date((b.cost_date || b.income_date) + 'T00:00:00');
 
-                // Primary sort by date (descending)
                 if (dateA.getTime() !== dateB.getTime()) {
                     return dateB - dateA;
                 }
-
-                // Secondary sort by doc_id (descending) if dates are the same
                 return b.doc_id - a.doc_id;
             });
 
-            // Explicitly add sourceTable to each item for consistency with search results
             currentTableData = data.map(item => ({ ...item, sourceTable: selectedTable }));
 
-            renderTable(currentTableData, selectedTable, false); // Pass false for isSearchMode
-            // showMessage(`Data for ${tableSelect.options[tableSelect.selectedIndex].text} loaded successfully.`, 'success'); // REMOVED: Suppress success message
+            renderTable(currentTableData, selectedTable, false);
         } catch (error) {
             console.error('Error loading table data:', error);
             showMessage(`Error loading data: ${error.message}`, 'error');
-            renderTable([], selectedTable, false); // Clear table on error
+            renderTable([], selectedTable, false);
         }
     }
 
-    // Function to perform global search
     async function performGlobalSearch() {
         const query = globalSearchInput.value.toLowerCase().trim();
         if (!query) {
@@ -399,18 +410,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 data.forEach(item => {
                     let match = false;
-                    // Check string fields for a match
                     for (const key in item) {
                         if (typeof item[key] === 'string' && item[key].toLowerCase().includes(query)) {
                             match = true;
                             break;
                         }
-                        // Also check number fields if they can be converted to string and match
                         if (typeof item[key] === 'number' && String(item[key]).includes(query)) {
                             match = true;
                             break;
                         }
-                        // Check payment_method specifically
                         if (key === 'payment_method' && item[key] && item[key].toLowerCase().includes(query)) {
                             match = true;
                             break;
@@ -422,7 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Sort search results: primary by date (desc), secondary by doc_id (desc)
             allResults.sort((a, b) => {
                 const dateA = new Date((a.cost_date || a.income_date) + 'T00:00:00');
                 const dateB = new Date((b.cost_date || b.income_date) + 'T00:00:00');
@@ -433,35 +440,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 return b.doc_id - a.doc_id;
             });
 
-            currentTableData = allResults; // Store search results for editing
-            renderTable(allResults, null, true); // Pass true for isSearchMode
-            // showMessage(`Search completed. Found ${allResults.length} results.`, 'success'); // REMOVED: Suppress success message
+            currentTableData = allResults;
+            renderTable(allResults, null, true);
 
         } catch (error) {
             console.error('Error during global search:', error);
             showMessage(`Error during search: ${error.message}`, 'error');
-            renderTable([], null, true); // Clear table on error
+            renderTable([], null, true);
         }
     }
 
-
-    // Function to open the edit modal and populate fields
     function openEditModal(event) {
         const docId = event.target.dataset.docId;
         const tableType = event.target.dataset.tableType;
-        // Find the entry in currentTableData using both doc_id and sourceTable
         const entry = currentTableData.find(item => item.doc_id == docId && item.sourceTable === tableType);
 
         if (!entry) {
             showMessage('Entry not found for editing.', 'error');
-            console.error(`Attempted to edit docId: ${docId}, tableType: ${tableType}, but entry not found in currentTableData. currentTableData:`, currentTableData);
+            console.error(`Attempted to edit docId: ${docId}, tableType: ${tableType}, but entry not found in currentTableData:`, currentTableData);
             return;
         }
 
         modalTitle.textContent = `Edit ${tableType.replace('-', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Entry (ID: ${docId})`;
         modalDocId.value = docId;
         modalTableType.value = tableType;
-        dynamicFormFields.innerHTML = ''; // Clear previous fields
+        dynamicFormFields.innerHTML = '';
 
         let fields = [];
         if (tableType === 'daily-expenses') {
@@ -478,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { id: 'editFixedDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
                 { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['Annual', 'Monthly', 'One-Off', 'Initial Investment'], required: true },
                 { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'], required: true },
-                { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient, required: false }, // THIS IS THE KEY CHANGE
+                { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient, required: false },
                 { id: 'editFixedCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
                 { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
             ];
@@ -503,14 +506,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const select = document.createElement('select');
                 select.id = field.id;
                 select.name = field.name;
-                // Use field.required if defined, otherwise default to true for selects that are usually required
-                select.required = field.required !== undefined ? field.required : true; // Adjusted for selects
+                select.required = field.required !== undefined ? field.required : true;
                 
-                // Add a default "Select..." option if the field is a payment method
-                if (field.name === 'payment_method' || field.name === 'category' || field.name === 'cost_frequency') { // Also for category and cost_frequency
+                if (field.name === 'payment_method' || field.name === 'category' || field.name === 'cost_frequency') {
                     const defaultOption = document.createElement('option');
-                    defaultOption.value = ""; // Empty value
-                    defaultOption.textContent = `Select ${field.label.replace(':', '')}`; // Dynamic text
+                    defaultOption.value = "";
+                    defaultOption.textContent = `Select ${field.label.replace(':', '')}`;
                     select.appendChild(defaultOption);
                 }
 
@@ -520,17 +521,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.textContent = optionText;
                     select.appendChild(option);
                 });
-                // Set the value; if entry[field.name] is undefined/null, it will default to the empty option
-                select.value = entry[field.name] || ''; 
+                select.value = entry[field.name] || '';
                 div.appendChild(select);
             } else {
                 const input = document.createElement('input');
                 input.id = field.id;
                 input.name = field.name;
                 input.type = field.type;
-                input.value = entry[field.name]; // Use entry[field.name] to get the correct value
-                // Use field.required if defined, otherwise default to true for inputs that are usually required
-                input.required = field.required !== undefined ? field.required : true; // Adjusted for inputs
+                input.value = entry[field.name];
+                input.required = field.required !== undefined ? field.required : true;
                 if (field.type === 'number') {
                     input.step = field.step;
                     input.min = field.min;
@@ -540,16 +539,13 @@ document.addEventListener('DOMContentLoaded', () => {
             dynamicFormFields.appendChild(div);
         });
 
-        entryModal.style.display = 'flex'; // Use flex to center the modal
+        entryModal.style.display = 'flex';
     }
 
-    // Function to close the modal
     function closeModal() {
         entryModal.style.display = 'none';
-        // Removed: messageArea.style.display = 'none'; // This line was causing the issue
     }
 
-    // Handle Save Changes
     editForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const docId = modalDocId.value;
@@ -557,7 +553,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(editForm);
         const updates = {};
         for (let [key, value] of formData.entries()) {
-            // Convert numbers if necessary
             if (key.includes('amount') || key.includes('revenue') || key.includes('hours_worked') || key.includes('eur')) {
                 updates[key] = parseFloat(value);
             } else {
@@ -575,9 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                showMessage('Entry updated successfully!', 'success'); // This line is correct
+                showMessage('Entry updated successfully!', 'success');
                 closeModal();
-                // After update, if we were in search mode, re-search, otherwise reload filtered data
                 if (globalSearchInput.value.trim()) {
                     performGlobalSearch();
                 } else {
@@ -594,29 +588,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle Delete (for modal's delete button)
-    deleteBtn.addEventListener('click', async () => {
-        const docId = modalDocId.value;
-        const tableType = modalTableType.value;
-        if (confirm('Are you sure you want to delete this entry?')) {
-            const success = await performDelete(docId, tableType);
-            if (success) {
-                closeModal(); // Close modal only if deletion was successful
-                // After delete, if we were in search mode, re-search, otherwise reload filtered data
-                if (globalSearchInput.value.trim()) {
-                    performGlobalSearch();
-                } else {
-                    loadTableData();
-                }
-            }
-        }
-    });
+    deleteBtn.addEventListener('click', handleDeleteRow);
 
-
-    // Event Listeners
     loadDataBtn.addEventListener('click', loadTableData);
-    globalSearchBtn.addEventListener('click', performGlobalSearch); // New event listener for global search
-    globalSearchInput.addEventListener('keypress', (event) => { // Allow pressing Enter to search
+    globalSearchBtn.addEventListener('click', performGlobalSearch);
+    globalSearchInput.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             performGlobalSearch();
         }
@@ -628,6 +604,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial load of data when page loads
-    loadTableData(); // Call loadTableData on initial page load
+    loadTableData();
 });

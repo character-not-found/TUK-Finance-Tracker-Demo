@@ -1,19 +1,15 @@
 # app/api/routers/fixed_costs.py
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List, Dict, Any
-import logging # Import logging
-from sqlalchemy.orm import Session # Import Session
-from fastapi import Depends # Ensure Depends is imported
-from app.database import get_db # Import the database dependency
+import logging
+from sqlalchemy.orm import Session
 
-# Relative imports from the 'app' package
-from ... import database
-from ...models import FixedCost, PaymentMethod # Ensure FixedCost and PaymentMethod are imported
+from app import database
+from app.database import get_db
+from app.models import FixedCost, PaymentMethod
 
-# Get a logger for this router
 logger = logging.getLogger(__name__)
 
-# Create an API router specific to fixed costs
 router = APIRouter(
     prefix="/fixed-costs",
     tags=["Fixed Costs"],
@@ -37,10 +33,10 @@ async def get_fixed_cost_by_id(doc_id: int, db: Session = Depends(get_db)):
     Raises a 404 error if the cost is not found.
     """
     logger.info(f"Attempting to retrieve fixed cost with ID: {doc_id}")
-    cost = database.get_fixed_cost_by_id(db, doc_id) # Use the database function
+    cost = database.get_fixed_cost_by_id(db, doc_id)
     if not cost:
         logger.warning(f"Fixed cost with ID {doc_id} not found.")
-        raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Fixed cost with ID {doc_id} not found")
     logger.info(f"Successfully retrieved fixed cost with ID: {doc_id}")
     return cost
 
@@ -65,23 +61,22 @@ async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Sessio
     """
     logger.info(f"Attempting to update fixed cost with ID {doc_id} with updates: {updates}")
     
-    # Ensure payment_method is converted to Enum if present in updates
     if 'payment_method' in updates and isinstance(updates['payment_method'], str):
         try:
             updates['payment_method'] = PaymentMethod(updates['payment_method'])
         except ValueError:
             logger.warning(f"Invalid payment_method provided for fixed cost update: {updates['payment_method']}")
-            raise HTTPException(status_code=400, detail="Invalid payment_method provided")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payment_method provided")
 
     success = database.update_fixed_cost(db, doc_id, updates)
     if not success:
         logger.warning(f"Fixed cost with ID {doc_id} not found or update failed.")
-        raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found or update failed.")
-    # Retrieve the updated cost to return it
-    updated_cost = database.get_fixed_cost_by_id(db, doc_id) # Use the database function
-    if not updated_cost: # Should not happen if update was successful
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Fixed cost with ID {doc_id} not found or update failed.")
+    
+    updated_cost = database.get_fixed_cost_by_id(db, doc_id)
+    if not updated_cost:
         logger.error(f"Failed to retrieve updated fixed cost with ID {doc_id} after successful update operation.")
-        raise HTTPException(status_code=500, detail="Failed to retrieve updated fixed cost.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve updated fixed cost.")
     logger.info(f"Fixed cost with ID {doc_id} updated successfully.")
     return updated_cost
 
@@ -94,6 +89,6 @@ async def delete_fixed_cost_api(doc_id: int, db: Session = Depends(get_db)):
     success = database.delete_fixed_cost(db, doc_id)
     if not success:
         logger.warning(f"Fixed cost with ID {doc_id} not found or deletion failed.")
-        raise HTTPException(status_code=404, detail=f"Fixed cost with ID {doc_id} not found or deletion failed.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Fixed cost with ID {doc_id} not found or deletion failed.")
     logger.info(f"Fixed cost with ID {doc_id} deleted successfully.")
     return {"message": "Fixed cost deleted successfully"}

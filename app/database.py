@@ -1,40 +1,35 @@
 # app/database.py
-# Refactored to use SQLAlchemy for a relational database (e.g., PostgreSQL or SQLite)
+# Implements database operations using SQLAlchemy for the cash management system.
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Enum as SQLEnum
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Enum as SQLEnum, func, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from collections import defaultdict # Still useful for summaries
+from collections import defaultdict
 import logging
 
-# Import your Pydantic models and settings
 from .models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, CashOnHand, PaymentMethod
-from app.config import settings # Import settings
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Use the DATABASE_URL from settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Create the SQLAlchemy engine
-# connect_args={"check_same_thread": False} is needed for SQLite with FastAPI
-# For PostgreSQL, you might use 'pool_pre_ping=True'
+# Configure the SQLAlchemy engine based on the database type.
+# 'connect_args={"check_same_thread": False}' is crucial for SQLite with FastAPI to allow multiple requests.
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    # For PostgreSQL, ensure you have psycopg2-binary installed
+    # For PostgreSQL, you might want to add 'pool_pre_ping=True' for connection pooling.
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-# Create a SessionLocal class for database sessions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for declarative models
 Base = declarative_base()
 
-# --- SQLAlchemy Models (Mirroring your Pydantic models) ---
-# These define the table structure in your SQL database
+# --- SQLAlchemy Models ---
+# These define the database table schemas for the application's data.
 class DBCashOnHand(Base):
     __tablename__ = "cash_on_hand"
     id = Column(Integer, primary_key=True, index=True)
@@ -46,11 +41,11 @@ class DBFixedCost(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount_eur = Column(Float, nullable=False)
     description = Column(String, nullable=False)
-    cost_frequency = Column(SQLEnum(CostFrequency), nullable=False) # Store Enum value
-    category = Column(SQLEnum(ExpenseCategory), nullable=False)     # Store Enum value
+    cost_frequency = Column(SQLEnum(CostFrequency), nullable=False)
+    category = Column(SQLEnum(ExpenseCategory), nullable=False)
     recipient = Column(String, nullable=True)
-    cost_date = Column(String, nullable=False) # Storing as string YYYY-MM-DD
-    payment_method = Column(SQLEnum(PaymentMethod), nullable=False) # Store Enum value
+    cost_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
+    payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
 
 class DBDailyExpense(Base):
@@ -58,42 +53,41 @@ class DBDailyExpense(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     description = Column(String, nullable=False)
-    category = Column(SQLEnum(ExpenseCategory), nullable=False) # Store Enum value
-    cost_date = Column(String, nullable=False) # Storing as string YYYY-MM-DD
-    payment_method = Column(SQLEnum(PaymentMethod), nullable=False) # Store Enum value
+    category = Column(SQLEnum(ExpenseCategory), nullable=False)
+    cost_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
+    payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
 
 class DBIncome(Base):
     __tablename__ = "income"
     id = Column(Integer, primary_key=True, index=True)
-    income_date = Column(String, nullable=False) # Storing as string YYYY-MM-DD
+    income_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
     tours_revenue_eur = Column(Float, nullable=False)
     transfers_revenue_eur = Column(Float, nullable=False)
     hours_worked = Column(Float, nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
 
 # --- Database Dependency for FastAPI ---
-# This function yields a database session that FastAPI can use.
 def get_db():
+    """Provides a SQLAlchemy session for FastAPI endpoint dependencies."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-# --- Functions for managing Cash On Hand (Rewritten for SQLAlchemy) ---
+# --- Functions for managing Cash On Hand ---
 def get_cash_on_hand_balance(db_session: Session) -> CashOnHand:
     balance_entry = db_session.query(DBCashOnHand).first()
     if not balance_entry:
-        # Initialize with 0.0 if no entry exists
         initial_balance_data = DBCashOnHand(balance=0.0, last_updated=datetime.now())
         db_session.add(initial_balance_data)
         db_session.commit()
         db_session.refresh(initial_balance_data)
         logger.info("Initialized cash on hand balance to 0.0.")
-        return CashOnHand(doc_id=initial_balance_data.id, **initial_balance_data.__dict__)
+        return CashOnHand.model_validate(initial_balance_data)
     logger.debug(f"Retrieved cash on hand balance: {balance_entry.balance}")
-    return CashOnHand(doc_id=balance_entry.id, **balance_entry.__dict__)
+    return CashOnHand.model_validate(balance_entry)
 
 def update_cash_on_hand_balance(db_session: Session, amount: float):
     current_balance_entry = get_cash_on_hand_balance(db_session)
@@ -105,47 +99,46 @@ def update_cash_on_hand_balance(db_session: Session, amount: float):
     logger.info(f"Cash on hand updated by {amount:.2f}. New balance: {new_balance:.2f}")
 
 def set_initial_cash_on_hand(db_session: Session, initial_balance: float) -> CashOnHand:
-    db_session.query(DBCashOnHand).delete() # Clear existing entries
+    db_session.query(DBCashOnHand).delete()
     db_session.commit()
     initial_balance_data = DBCashOnHand(balance=round(initial_balance, 2), last_updated=datetime.now())
     db_session.add(initial_balance_data)
     db_session.commit()
     db_session.refresh(initial_balance_data)
     logger.info(f"Initial cash on hand balance set to {initial_balance:.2f}.")
-    return CashOnHand(doc_id=initial_balance_data.id, **initial_balance_data.__dict__)
+    return CashOnHand.model_validate(initial_balance_data)
 
-# --- Functions for managing Fixed Costs (Rewritten for SQLAlchemy) ---
+# --- Functions for managing Fixed Costs ---
 def add_fixed_cost(db_session: Session, cost: FixedCost) -> FixedCost:
-    # Convert Pydantic model to SQLAlchemy model
     db_cost = DBFixedCost(
         amount_eur=cost.amount_eur,
         description=cost.description,
-        cost_frequency=cost.cost_frequency, # Enums are handled by SQLEnum
+        cost_frequency=cost.cost_frequency,
         category=cost.category,
         recipient=cost.recipient,
         cost_date=cost.cost_date,
-        payment_method=cost.payment_method, # Enums are handled by SQLEnum
+        payment_method=cost.payment_method,
         timestamp=datetime.now()
     )
     db_session.add(db_cost)
     db_session.commit()
-    db_session.refresh(db_cost) # Refresh to get the auto-generated ID
+    db_session.refresh(db_cost)
     logger.info(f"Added fixed cost: {cost.description} with ID {db_cost.id}")
     if cost.payment_method == PaymentMethod.CASH:
         update_cash_on_hand_balance(db_session, -cost.amount_eur)
         logger.info(f"Cash on hand decreased by {cost.amount_eur:.2f} for fixed cost (cash payment).")
-    return FixedCost(doc_id=db_cost.id, **db_cost.__dict__)
+    return FixedCost.model_validate(db_cost)
 
 def get_all_fixed_costs(db_session: Session) -> List[FixedCost]:
     costs = db_session.query(DBFixedCost).all()
     logger.info(f"Retrieved {len(costs)} fixed costs.")
-    return [FixedCost(doc_id=cost.id, **cost.__dict__) for cost in costs]
+    return [FixedCost.model_validate(cost) for cost in costs]
 
 def get_fixed_cost_by_id(db_session: Session, doc_id: int) -> Optional[FixedCost]:
     cost = db_session.query(DBFixedCost).filter(DBFixedCost.id == doc_id).first()
     if cost:
         logger.info(f"Retrieved fixed cost with ID: {doc_id}")
-        return FixedCost(doc_id=cost.id, **cost.__dict__)
+        return FixedCost.model_validate(cost)
     logger.warning(f"Fixed cost with ID {doc_id} not found.")
     return None
 
@@ -158,7 +151,6 @@ def update_fixed_cost(db_session: Session, doc_id: int, updates: Dict[str, Any])
     old_amount = old_cost.amount_eur
     old_payment_method = old_cost.payment_method
 
-    # Convert incoming string values to Enum members for SQLAlchemy update
     if 'cost_frequency' in updates and isinstance(updates['cost_frequency'], str):
         updates['cost_frequency'] = CostFrequency(updates['cost_frequency'])
     if 'category' in updates and isinstance(updates['category'], str):
@@ -173,7 +165,7 @@ def update_fixed_cost(db_session: Session, doc_id: int, updates: Dict[str, Any])
 
     if updated_count:
         logger.info(f"Updated fixed cost with ID {doc_id}. Changes: {updates}")
-        new_cost = get_fixed_cost_by_id(db_session, doc_id) # Fetch updated cost to get new amount/method
+        new_cost = get_fixed_cost_by_id(db_session, doc_id)
         new_amount = new_cost.amount_eur
         new_payment_method = new_cost.payment_method
 
@@ -211,7 +203,7 @@ def delete_fixed_cost(db_session: Session, doc_id: int) -> bool:
     logger.warning(f"Fixed cost with ID {doc_id} not found for deletion.")
     return False
 
-# --- Functions for managing Daily Expenses (Rewritten for SQLAlchemy) ---
+# --- Functions for managing Daily Expenses ---
 def add_daily_expense(db_session: Session, expense: DailyExpense) -> DailyExpense:
     db_expense = DBDailyExpense(
         amount=expense.amount,
@@ -228,18 +220,18 @@ def add_daily_expense(db_session: Session, expense: DailyExpense) -> DailyExpens
     if expense.payment_method == PaymentMethod.CASH:
         update_cash_on_hand_balance(db_session, -expense.amount)
         logger.info(f"Cash on hand decreased by {expense.amount:.2f} for daily expense (cash payment).")
-    return DailyExpense(doc_id=db_expense.id, **db_expense.__dict__)
+    return DailyExpense.model_validate(db_expense)
 
 def get_all_daily_expenses(db_session: Session) -> List[DailyExpense]:
     expenses = db_session.query(DBDailyExpense).all()
     logger.info(f"Retrieved {len(expenses)} daily expenses.")
-    return [DailyExpense(doc_id=expense.id, **expense.__dict__) for expense in expenses]
+    return [DailyExpense.model_validate(expense) for expense in expenses]
 
 def get_daily_expense_by_id(db_session: Session, doc_id: int) -> Optional[DailyExpense]:
     expense = db_session.query(DBDailyExpense).filter(DBDailyExpense.id == doc_id).first()
     if expense:
         logger.info(f"Retrieved daily expense with ID: {doc_id}")
-        return DailyExpense(doc_id=expense.id, **expense.__dict__)
+        return DailyExpense.model_validate(expense)
     logger.warning(f"Daily expense with ID {doc_id} not found.")
     return None
 
@@ -302,7 +294,7 @@ def delete_daily_expense(db_session: Session, doc_id: int) -> bool:
     logger.warning(f"Daily expense with ID {doc_id} not found for deletion.")
     return False
 
-# --- Functions for managing Income (Rewritten for SQLAlchemy) ---
+# --- Functions for managing Income ---
 def add_income(db_session: Session, income: Income) -> Income:
     db_income = DBIncome(
         income_date=income.income_date,
@@ -318,18 +310,18 @@ def add_income(db_session: Session, income: Income) -> Income:
     total_income_amount = income.tours_revenue_eur + income.transfers_revenue_eur
     update_cash_on_hand_balance(db_session, total_income_amount)
     logger.info(f"Cash on hand increased by {total_income_amount:.2f} for income.")
-    return Income(doc_id=db_income.id, **db_income.__dict__)
+    return Income.model_validate(db_income)
 
 def get_all_income(db_session: Session) -> List[Income]:
     incomes = db_session.query(DBIncome).all()
     logger.info(f"Retrieved {len(incomes)} income entries.")
-    return [Income(doc_id=income.id, **income.__dict__) for income in incomes]
+    return [Income.model_validate(income) for income in incomes]
 
 def get_income_by_id(db_session: Session, doc_id: int) -> Optional[Income]:
     income = db_session.query(DBIncome).filter(DBIncome.id == doc_id).first()
     if income:
         logger.info(f"Retrieved income entry with ID: {doc_id}")
-        return Income(doc_id=income.id, **income.__dict__)
+        return Income.model_validate(income)
     logger.warning(f"Income entry with ID {doc_id} not found.")
     return None
 
@@ -385,32 +377,30 @@ def clear_all_data(db_session: Session):
     db_session.query(DBIncome).delete()
     db_session.query(DBCashOnHand).delete()
     db_session.commit()
-    set_initial_cash_on_hand(db_session, 0.0) # Re-initialize cash on hand to 0 after clearing
+    set_initial_cash_on_hand(db_session, 0.0)
     logger.info("All database tables truncated and cash on hand reset to 0.0 successfully.")
 
-# --- Functions for Summaries (Rewritten for SQLAlchemy) ---
-from sqlalchemy import func, and_
-
+# --- Functions for Summaries ---
 def get_daily_expenses_by_date_range(db_session: Session, start_date: str, end_date: str) -> List[DailyExpense]:
     expenses = db_session.query(DBDailyExpense).filter(
         and_(DBDailyExpense.cost_date >= start_date, DBDailyExpense.cost_date <= end_date)
     ).all()
     logger.info(f"Retrieved {len(expenses)} daily expenses between {start_date} and {end_date}.")
-    return [DailyExpense(doc_id=exp.id, **exp.__dict__) for exp in expenses]
+    return [DailyExpense.model_validate(exp) for exp in expenses]
 
 def get_fixed_costs_by_date_range(db_session: Session, start_date: str, end_date: str) -> List[FixedCost]:
     costs = db_session.query(DBFixedCost).filter(
         and_(DBFixedCost.cost_date >= start_date, DBFixedCost.cost_date <= end_date)
     ).all()
     logger.info(f"Retrieved {len(costs)} fixed costs between {start_date} and {end_date}.")
-    return [FixedCost(doc_id=cost.id, **cost.__dict__) for cost in costs]
+    return [FixedCost.model_validate(cost) for cost in costs]
 
 def get_income_by_date_range(db_session: Session, start_date: str, end_date: str) -> List[Income]:
     incomes = db_session.query(DBIncome).filter(
         and_(DBIncome.income_date >= start_date, DBIncome.income_date <= end_date)
     ).all()
     logger.info(f"Retrieved {len(incomes)} income entries between {start_date} and {end_date}.")
-    return [Income(doc_id=inc.id, **inc.__dict__) for inc in incomes]
+    return [Income.model_validate(inc) for inc in incomes]
 
 def get_monthly_summary(db_session: Session, year: int, month: int) -> Dict[str, float]:
     start_date = f"{year}-{month:02d}-01"
@@ -550,10 +540,8 @@ def get_global_summary(db_session: Session) -> Dict[str, float]:
     logger.info(f"Generated global summary: {summary}")
     return summary
 
-# Function to create all tables (call this on app startup or migration)
-def create_all_tables(engine_param=None): # Added engine_param for flexibility
-    # Use the module-level engine if no specific engine is passed
+# Function to create all tables (call this on application startup or during migrations)
+def create_all_tables(engine_param=None):
     target_engine = engine_param if engine_param else engine
     Base.metadata.create_all(bind=target_engine)
-    logger.info("All database tables created successfully (if they didn't exist).")
-
+    logger.info("Database tables created successfully (if they didn't already exist).")

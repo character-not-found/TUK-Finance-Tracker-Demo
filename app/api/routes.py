@@ -20,13 +20,24 @@ logger = logging.getLogger(__name__)
 
 class ForceHTTPSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Check if Caddy has sent the X-Forwarded-Proto header
+        # Log all incoming request headers
+        logger.info(f"Incoming request headers: {dict(request.headers)}")
+        # Log the scheme of the request URL *before* modification
+        logger.info(f"Initial request URL scheme: {request.url.scheme}")
+
         if "x-forwarded-proto" in request.headers:
-            # Modify the request URL's scheme to 'https'
-            # This directly impacts how request.url and url_for behave.
+            # Log the value of the X-Forwarded-Proto header
+            logger.info(f"X-Forwarded-Proto header found: {request.headers['x-forwarded-proto']}")
+            # Perform the scheme modification
             request.url._url = request.url._url.replace(
                 request.url.scheme, request.headers["x-forwarded-proto"]
             )
+            # Log the scheme of the request URL *after* modification
+            logger.info(f"Modified request URL scheme: {request.url.scheme}")
+        else:
+            # Log if the X-Forwarded-Proto header is not found
+            logger.warning("X-Forwarded-Proto header NOT found in request.")
+
         response = await call_next(request)
         return response
 

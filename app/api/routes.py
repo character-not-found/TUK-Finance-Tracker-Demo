@@ -20,32 +20,13 @@ logger = logging.getLogger(__name__)
 
 class ForceHTTPSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "DEBUG: Incoming Request Headers",
-                "headers": dict(request.headers),
-                "initial_scheme": request.url.scheme
-            }
-        )
-        # Log all incoming request headers
-        logger.info(f"Incoming request headers: {dict(request.headers)}")
-        # Log the scheme of the request URL *before* modification
-        logger.info(f"Initial request URL scheme: {request.url.scheme}")
-
-        if "x-forwarded-proto" in request.headers:
-            # Log the value of the X-Forwarded-Proto header
-            logger.info(f"X-Forwarded-Proto header found: {request.headers['x-forwarded-proto']}")
-            # Perform the scheme modification
-            request.url._url = request.url._url.replace(
-                request.url.scheme, request.headers["x-forwarded-proto"]
-            )
-            # Log the scheme of the request URL *after* modification
-            logger.info(f"Modified request URL scheme: {request.url.scheme}")
-        else:
-            # Log if the X-Forwarded-Proto header is not found
-            logger.warning("X-Forwarded-Proto header NOT found in request.")
-
+        # Check if X-Forwarded-Proto is present and indicates HTTPS
+        if "x-forwarded-proto" in request.headers and request.headers["x-forwarded-proto"] == "https":
+            # Directly modify the ASGI scope's scheme to 'https'
+            # This is the most fundamental way to tell FastAPI the protocol.
+            request.scope["scheme"] = "https"
+            # (Optional: you can keep a logger.info here for confirmation if you like)
+            # logger.info(f"ASGI scope scheme forced to HTTPS: {request.scope['scheme']}")
         response = await call_next(request)
         return response
 

@@ -71,6 +71,7 @@ class Income(BaseModel):
     transfers_revenue_eur: float = Field(..., ge=0, description="Revenue from transfers in Euros")
     hours_worked: float = Field(..., ge=0, description="Total hours worked for the income period")
     timestamp: Optional[datetime] = Field(None, description="Timestamp of creation/last update")
+    daily_total_eur: Optional[float] = Field(None, description="Calculated daily total income in Euros (not stored in DB)")
 
     model_config = ConfigDict(from_attributes=True)
 

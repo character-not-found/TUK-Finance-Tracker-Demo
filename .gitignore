@@ -22,3 +22,5 @@ db.json
 *.db
 
 *.env*
+
+Caddyfile

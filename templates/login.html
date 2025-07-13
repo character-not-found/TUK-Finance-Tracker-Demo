@@ -9,7 +9,7 @@
 {% block content %}
     <div class="login-container">
         <h2>Login to Tuk N' Roll</h2>
-        <form id="loginForm">
+        <form id="loginForm" method="post" action="/login/token">
             <div class="input-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>

@@ -1,12 +1,18 @@
+# docker-compose.yml
+version: '3.8'
 
 services:
-  # Your FastAPI application service
-  web-demo:
+  # Your FastAPI application service (renamed from web-demo to app)
+  app:
     build:
       context: . # Build context is the current directory (where Dockerfile is)
       dockerfile: Dockerfile # Path to the Dockerfile
-    ports:
-      - "12000:11000" # Host_port:Container_port - Adjust 11000 if your production port is different
+    
+    # IMPORTANT: Remove the 'ports' mapping here. Caddy will handle external exposure.
+    # Instead, 'expose' the internal port for Caddy to access.
+    expose:
+      - "11000" # Expose the internal port your app listens on (as defined in Dockerfile CMD)
+
     volumes:
       # Mount the current directory into the container's /app directory
       # This allows for live code changes during development (if --reload is used)
@@ -19,7 +25,7 @@ services:
     # Restart policy to restart the container if it exits
     restart: unless-stopped
     depends_on:
-      - db # Ensure 'db' service starts before 'web'
+      - db # Ensure 'db' service starts before 'app'
     networks:
       - demo_network # Use a custom network for services to communicate
 
@@ -33,12 +39,38 @@ services:
     # Optional: Expose to host if you need to connect from outside container (e.g., for psql client)
     # For production, consider removing this port mapping if not strictly needed for external access.
     # - "5432:5432"
-    networks: # Corrected: Changed 'network' to 'networks' (plural)
-      - demo_network # Connect to the same network as 'web'
+    networks:
+      - demo_network # Connect to the same network as 'app' and 'caddy'
+
+  # New Caddy Reverse Proxy service
+  caddy:
+    image: caddy:latest # Use the official Caddy Docker image
+    restart: unless-stopped # Automatically restart Caddy if it crashes
+    
+    # Map host ports 80 and 443 to Caddy's container ports.
+    # Caddy will listen on these ports for incoming HTTP and HTTPS requests.
+    ports:
+      - "80:80"   # HTTP port (for redirects and Let's Encrypt challenges)
+      - "443:443" # HTTPS port (for secure traffic)
+    
+    # Mount your Caddyfile into the container's default config location
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro # Mount your custom Caddyfile (read-only)
+      - caddy_data:/data                    # Volume for Caddy to store SSL certificates and other data
+      - caddy_config:/config                # Volume for Caddy's configuration (internal state)
+
+    # Ensures the 'app' service starts before Caddy tries to proxy to it.
+    depends_on:
+      - app 
+    
+    networks:
+      - demo_network # Connect Caddy to the same network as the 'app'
 
 volumes:
   postgres_data: # Define the named volume for persistent PostgreSQL data
+  caddy_data:    # Define the named volume for Caddy's persistent data (certs, etc.)
+  caddy_config:  # Define the named volume for Caddy's configuration
 
 networks:
-  demo_network: # Define a custom network for services to communicate securely
-    driver: bridge # Corrected: Changed 'drive' to 'driver'
+  demo_network:
+    driver: bridge # Define a custom network for services to communicate securely

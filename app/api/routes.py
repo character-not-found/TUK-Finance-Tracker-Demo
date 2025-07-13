@@ -23,7 +23,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="TUK'N'ROLL Business Management API",
+    title="Cash-On-Hand Finance Tracker API",
     description="API for managing business expenses, costs, and income.",
     version="1.0.0"
 )

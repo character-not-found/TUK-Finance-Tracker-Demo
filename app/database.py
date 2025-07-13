@@ -99,6 +99,7 @@ def update_cash_on_hand_balance(db_session: Session, amount: float):
     logger.info(f"Cash on hand updated by {amount:.2f}. New balance: {new_balance:.2f}")
 
 def set_initial_cash_on_hand(db_session: Session, initial_balance: float) -> CashOnHand:
+    # This function is now used by reset_cash_on_hand_balance
     db_session.query(DBCashOnHand).delete()
     db_session.commit()
     initial_balance_data = DBCashOnHand(balance=round(initial_balance, 2), last_updated=datetime.now())
@@ -368,17 +369,30 @@ def delete_income(db_session: Session, doc_id: int) -> bool:
     return False
 
 # --- Functions for clearing all data (for development/testing) ---
-def clear_all_data(db_session: Session):
-    """
-    Clears all data from all tables, including cash on hand. Use with caution!
-    """
-    db_session.query(DBFixedCost).delete()
-    db_session.query(DBDailyExpense).delete()
-    db_session.query(DBIncome).delete()
-    db_session.query(DBCashOnHand).delete()
+def clear_all_fixed_costs(db_session: Session):
+    """Deletes all fixed cost entries from the database."""
+    num_deleted = db_session.query(DBFixedCost).delete()
     db_session.commit()
-    set_initial_cash_on_hand(db_session, 0.0)
-    logger.info("All database tables truncated and cash on hand reset to 0.0 successfully.")
+    logger.info(f"Cleared {num_deleted} fixed cost entries.")
+
+def clear_all_daily_expenses(db_session: Session):
+    """Deletes all daily expense entries from the database."""
+    num_deleted = db_session.query(DBDailyExpense).delete()
+    db_session.commit()
+    logger.info(f"Cleared {num_deleted} daily expense entries.")
+
+def clear_all_income(db_session: Session):
+    """Deletes all income entries from the database."""
+    num_deleted = db_session.query(DBIncome).delete()
+    db_session.commit()
+    logger.info(f"Cleared {num_deleted} income entries.")
+
+def reset_cash_on_hand_balance(db_session: Session, initial_balance: float = 0.0):
+    """Resets the cash on hand balance to a specified initial value."""
+    # This function now re-uses set_initial_cash_on_hand to ensure a clean state
+    set_initial_cash_on_hand(db_session, initial_balance)
+    logger.info(f"Cash on hand balance reset to {initial_balance}.")
+
 
 # --- Functions for Summaries ---
 def get_daily_expenses_by_date_range(db_session: Session, start_date: str, end_date: str) -> List[DailyExpense]:

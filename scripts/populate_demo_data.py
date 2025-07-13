@@ -6,7 +6,8 @@ import logging
 from app.database import SessionLocal, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
 from app.models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, PaymentMethod
 from app.database import (
-    add_fixed_cost, add_daily_expense, add_income
+    add_fixed_cost, add_daily_expense, add_income,
+    clear_all_fixed_costs, clear_all_daily_expenses, clear_all_income, reset_cash_on_hand_balance # Import new functions
 )
 
 # Configure a basic logger for this script
@@ -92,7 +93,7 @@ def generate_random_income() -> Income:
 
 def populate_fake_data(num_fixed_costs: int = 5, num_daily_expenses: int = 30, num_income_entries: int = 20):
     """
-    Populates the database with fake data.
+    Populates the database with fake data, clearing existing entries first.
     Args:
         num_fixed_costs (int): Number of fixed cost entries to generate.
         num_daily_expenses (int): Number of daily expense entries to generate.
@@ -101,26 +102,33 @@ def populate_fake_data(num_fixed_costs: int = 5, num_daily_expenses: int = 30, n
     logger.info("Starting fake data population...")
     db_session = SessionLocal()
     try:
-        create_all_tables()
+        create_all_tables() # Ensure tables exist
         logger.info("Database tables ensured to be created.")
 
-        current_cash = get_cash_on_hand_balance(db_session)
-        if current_cash.balance == 0.0 and current_cash.doc_id == 1:
-            set_initial_cash_on_hand(db_session, 1000.0)
-            logger.info("Cash on hand initialized to 1000.0 for demo purposes.")
+        # --- NEW: Clear existing data ---
+        logger.info("Clearing existing data from tables...")
+        clear_all_fixed_costs(db_session)
+        clear_all_daily_expenses(db_session)
+        clear_all_income(db_session)
+        reset_cash_on_hand_balance(db_session, 1000.0) # Reset cash on hand to initial value
+        logger.info("Existing data cleared and cash on hand reset.")
+        # --- END NEW ---
 
+        # Add Fixed Costs
         logger.info(f"Generating {num_fixed_costs} fake fixed costs...")
         for _ in range(num_fixed_costs):
             fixed_cost = generate_random_fixed_cost()
             add_fixed_cost(db_session, fixed_cost)
         logger.info(f"Finished generating {num_fixed_costs} fixed costs.")
 
+        # Add Daily Expenses
         logger.info(f"Generating {num_daily_expenses} fake daily expenses...")
         for _ in range(num_daily_expenses):
             daily_expense = generate_random_daily_expense()
             add_daily_expense(db_session, daily_expense)
         logger.info(f"Finished generating {num_daily_expenses} daily expenses.")
 
+        # Add Income Entries
         logger.info(f"Generating {num_income_entries} fake income entries...")
         for _ in range(num_income_entries):
             income_entry = generate_random_income()

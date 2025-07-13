@@ -12,13 +12,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.api.routers import fixed_costs, daily_expenses, income, summary
 from app.database import get_db, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
 from app.config import settings
-from app.database import SessionLocal # Import SessionLocal for startup event
+from app.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Cash-On-Hand Business Manager Demo API", # Updated title
-    description="API for managing business expenses, costs, and income in a demo environment.", # Updated description
+    title="Cash-On-Hand Business Manager Demo API",
+    description="API for managing business expenses, costs, and income in a demo environment.",
     version="1.0.0"
 )
 
@@ -36,19 +36,16 @@ async def startup_event():
     logger.info("Application startup event triggered.")
     create_all_tables()
 
-    # Initialize cash on hand if it's the first run
-    db_session = SessionLocal() # Use SessionLocal directly for startup
+    db_session = SessionLocal()
     try:
         current_cash = get_cash_on_hand_balance(db_session)
-        # Check if the balance is 0.0 AND it's a newly created (empty) entry
-        if current_cash.balance == 0.0 and current_cash.doc_id == 1: # Assuming first ID is 1 for a fresh table
+        if current_cash.balance == 0.0 and current_cash.doc_id == 1:
              set_initial_cash_on_hand(db_session, 0.0)
              logger.info("Cash on hand initialized to 0.0 during startup.")
     except Exception as e:
         logger.error(f"Error during cash on hand initialization at startup: {e}", exc_info=True)
     finally:
         db_session.close()
-
 
 # --- HTML Endpoints ---
 @app.get("/login", response_class=HTMLResponse, summary="Serve the login page")
@@ -60,8 +57,10 @@ async def login_page(request: Request):
 async def read_root(request: Request, db: Session = Depends(get_db)):
     access_token = request.cookies.get("access_token")
 
-    if settings.APP_ENV == "demo" and not access_token:
-        logger.info("No access token found in demo environment, redirecting to login.")
+    # Always redirect to login if no access token is found
+    # This ensures that authentication is enforced regardless of APP_ENV
+    if not access_token:
+        logger.info("No access token found, redirecting to login.")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
     logger.info("Serving dashboard_content.html")
@@ -93,18 +92,16 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     if settings.APP_ENV == "demo":
         if form_data.username == settings.DEMO_USERNAME and form_data.password == settings.DEMO_PASSWORD:
             logger.info(f"Demo user '{form_data.username}' logged in successfully.")
-            access_token = "demo_access_token_for_employer" # Static token for demo
-
-            # Set the access token as an HttpOnly cookie
+            access_token = "demo_access_token_for_employer"
             expires_at = datetime.now() + timedelta(hours=1)
             response.set_cookie(
                 key="access_token",
                 value=access_token,
-                expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"), # Format for cookie expires
-                httponly=True, # Prevent JavaScript access
-                samesite="lax", # Protect against CSRF
-                secure=True, # Only send over HTTPS (important for production)
-                path="/" # Available across the entire application
+                expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
+                httponly=True,
+                samesite="lax",
+                secure=True,
+                path="/"
             )
             return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
         raise HTTPException(
@@ -124,8 +121,8 @@ async def logout(response: Response):
     logger.info("Logout endpoint accessed. Clearing access token cookie.")
     response.set_cookie(
         key="access_token",
-        value="", # Empty value
-        expires=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"), # Expire immediately
+        value="",
+        expires=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
         httponly=True,
         samesite="lax",
         secure=True,

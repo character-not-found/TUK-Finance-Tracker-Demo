@@ -1,11 +1,12 @@
+
 services:
   # Your FastAPI application service
-  web:
+  web-demo:
     build:
       context: . # Build context is the current directory (where Dockerfile is)
       dockerfile: Dockerfile # Path to the Dockerfile
     ports:
-      - "11000:11000" # Host_port:Container_port - Adjust 11000 if your production port is different
+      - "12000:11000" # Host_port:Container_port - Adjust 11000 if your production port is different
     volumes:
       # Mount the current directory into the container's /app directory
       # This allows for live code changes during development (if --reload is used)
@@ -20,7 +21,7 @@ services:
     depends_on:
       - db # Ensure 'db' service starts before 'web'
     networks:
-      - app_network # Use a custom network for services to communicate
+      - demo_network # Use a custom network for services to communicate
 
   # PostgreSQL database service
   db:
@@ -33,11 +34,11 @@ services:
     # For production, consider removing this port mapping if not strictly needed for external access.
     # - "5432:5432"
     networks: # Corrected: Changed 'network' to 'networks' (plural)
-      - app_network # Connect to the same network as 'web'
+      - demo_network # Connect to the same network as 'web'
 
 volumes:
   postgres_data: # Define the named volume for persistent PostgreSQL data
 
 networks:
-  app_network: # Define a custom network for services to communicate securely
+  demo_network: # Define a custom network for services to communicate securely
     driver: bridge # Corrected: Changed 'drive' to 'driver'

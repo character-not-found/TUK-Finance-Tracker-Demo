@@ -1,4 +1,3 @@
-# Use an official Python runtime as a parent image
 FROM python:3.12-slim-bookworm
 
 # Set the working directory in the container
@@ -44,4 +43,4 @@ EXPOSE 11000
 # --host 0.0.0.0 makes the server accessible from outside the container
 # --port 9000 specifies the port
 # --reload is good for development, but remove it for production for better performance
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "11000"]
+CMD ["uvicorn", "app.api.routes:app", "--host", "0.0.0.0", "--port", "11000"]

@@ -1,30 +1,24 @@
 # app/api/routes.py
-from fastapi import FastAPI, Request, HTTPException, status, Depends, Response # Import Response
+from fastapi import FastAPI, Request, HTTPException, status, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging
-from datetime import datetime, timedelta # Import timedelta for cookie expiration
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
-# Import the individual routers
-from .routers import fixed_costs
-from .routers import daily_expenses
-from .routers import income
-from .routers import summary
-
-# Import database functions and the get_db dependency
-from app import database
-from app.database import get_db, create_all_tables
+from app.api.routers import fixed_costs, daily_expenses, income, summary
+from app.database import get_db, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
 from app.config import settings
+from app.database import SessionLocal # Import SessionLocal for startup event
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Cash-On-Hand Finance Tracker API",
-    description="API for managing business expenses, costs, and income.",
+    title="Cash-On-Hand Business Manager Demo API", # Updated title
+    description="API for managing business expenses, costs, and income in a demo environment.", # Updated description
     version="1.0.0"
 )
 
@@ -40,13 +34,14 @@ app.include_router(summary.router)
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application startup event triggered.")
-    database.create_all_tables()
+    create_all_tables()
 
-    db_session = next(get_db())
+    # Initialize cash on hand if it's the first run
+    db_session = SessionLocal() # Use SessionLocal directly for startup
     try:
-        from app.database import get_cash_on_hand_balance, set_initial_cash_on_hand
         current_cash = get_cash_on_hand_balance(db_session)
-        if current_cash.balance == 0.0 and current_cash.doc_id is None:
+        # Check if the balance is 0.0 AND it's a newly created (empty) entry
+        if current_cash.balance == 0.0 and current_cash.doc_id == 1: # Assuming first ID is 1 for a fresh table
              set_initial_cash_on_hand(db_session, 0.0)
              logger.info("Cash on hand initialized to 0.0 during startup.")
     except Exception as e:
@@ -63,7 +58,6 @@ async def login_page(request: Request):
 
 @app.get("/", response_class=HTMLResponse, summary="Serve the main dashboard HTML page")
 async def read_root(request: Request, db: Session = Depends(get_db)):
-    # Check for access token in cookies
     access_token = request.cookies.get("access_token")
 
     if settings.APP_ENV == "demo" and not access_token:
@@ -95,14 +89,13 @@ async def health_check():
 
 # --- Authentication Endpoint ---
 @app.post("/login/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None, db: Session = Depends(get_db)): # Add Response parameter
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None, db: Session = Depends(get_db)):
     if settings.APP_ENV == "demo":
         if form_data.username == settings.DEMO_USERNAME and form_data.password == settings.DEMO_PASSWORD:
             logger.info(f"Demo user '{form_data.username}' logged in successfully.")
             access_token = "demo_access_token_for_employer" # Static token for demo
 
             # Set the access token as an HttpOnly cookie
-            # For demo, let's make it last for 1 hour (3600 seconds)
             expires_at = datetime.now() + timedelta(hours=1)
             response.set_cookie(
                 key="access_token",
@@ -126,7 +119,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="Production authentication logic not yet implemented. Please replace this placeholder.",
         )
 
-# New: Logout endpoint to clear the cookie
 @app.post("/logout")
 async def logout(response: Response):
     logger.info("Logout endpoint accessed. Clearing access token cookie.")

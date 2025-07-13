@@ -1,46 +1,55 @@
-// static/js/auth.js
 document.addEventListener('DOMContentLoaded', () => {
     const authStatusSpan = document.getElementById('authStatus');
     const logoutButton = document.getElementById('logoutButton');
-    const loggedInNavItems = document.getElementById('loggedInNavItems'); // Get the new div
+    const loggedInNavItems = document.getElementById('loggedInNavItems');
+    const messageArea = document.getElementById('authMessageArea'); // Assuming a message area exists in your HTML for auth
 
-    // Function to handle showing/hiding UI elements based on authentication status
+    // Function to display messages
+    function showMessage(message, type) {
+        if (messageArea) {
+            messageArea.textContent = message;
+            messageArea.classList.remove('hidden', 'success', 'error');
+            messageArea.classList.add('message', type);
+            messageArea.classList.remove('hidden');
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000);
+        } else {
+            console.warn("Message area not found for auth.js. Message:", message);
+        }
+    }
+
     function handleAuthUI(isLoggedIn) {
         if (isLoggedIn) {
-            // User is logged in
             if (authStatusSpan) {
-                authStatusSpan.textContent = 'Logged in as demo_user.'; // Changed text here
+                authStatusSpan.textContent = 'Logged in as demo_user.';
                 authStatusSpan.style.color = 'green';
-                authStatusSpan.classList.remove('hidden'); // Show status
+                authStatusSpan.classList.remove('hidden');
             }
-            if (logoutButton) logoutButton.classList.remove('hidden'); // Show logout button
+            if (logoutButton) logoutButton.classList.remove('hidden');
             if (loggedInNavItems) {
-                loggedInNavItems.classList.remove('hidden'); // Show nav items
+                loggedInNavItems.classList.remove('hidden');
             }
         } else {
-            // User is not logged in
             if (authStatusSpan) {
-                // Only show "Please log in." if not on the actual login page
                 if (window.location.pathname !== '/login') {
                     authStatusSpan.textContent = 'Please log in.';
                     authStatusSpan.style.color = 'orange';
-                    authStatusSpan.classList.remove('hidden'); // Show status
+                    authStatusSpan.classList.remove('hidden');
                 } else {
-                    authStatusSpan.classList.add('hidden'); // Hide status on login page
+                    authStatusSpan.classList.add('hidden');
                 }
             }
-            if (logoutButton) logoutButton.classList.add('hidden'); // Hide logout button
+            if (logoutButton) logoutButton.classList.add('hidden');
             if (loggedInNavItems) {
-                loggedInNavItems.classList.add('hidden'); // Hide nav items
+                loggedInNavItems.classList.add('hidden');
             }
         }
     }
 
-    // Initial check on page load
     const isCurrentlyLoggedIn = (window.location.pathname !== '/login');
     handleAuthUI(isCurrentlyLoggedIn);
 
-    // Handle logout button click
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
             try {
@@ -49,22 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    // No body needed for logout
                 });
 
                 if (response.ok) {
-                    // Update UI immediately
                     handleAuthUI(false);
-                    // Redirect to login page after successful logout
                     window.location.href = '/login';
                 } else {
                     const errorData = await response.json();
                     console.error('Logout failed:', errorData.detail || 'Unknown error');
-                    alert('Logout failed: ' + (errorData.detail || 'Please try again.'));
+                    showMessage('Logout failed: ' + (errorData.detail || 'Please try again.'), 'error');
                 }
             } catch (error) {
                 console.error('Network or unexpected error during logout:', error);
-                alert('An error occurred during logout.');
+                showMessage('An error occurred during logout.', 'error');
             }
         });
     }

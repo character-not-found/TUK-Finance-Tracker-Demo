@@ -1,7 +1,4 @@
-// static/js/login.js
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('login.js loaded.');
-
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -9,14 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault();
 
             const username = usernameInput.value;
             const password = passwordInput.value;
 
-            // Clear previous messages
             messageDisplay.textContent = '';
-            messageDisplay.style.color = 'red'; // Default to red for errors
+            messageDisplay.style.color = 'red';
 
             try {
                 const formData = new URLSearchParams();
@@ -32,11 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
-                    // No need to read data or store token in sessionStorage
-                    // The server has already set the HttpOnly cookie.
                     messageDisplay.textContent = 'Login successful! Redirecting...';
                     messageDisplay.style.color = 'green';
-                    // Redirect to the dashboard or main page
                     window.location.href = '/';
                 } else {
                     const errorData = await response.json();

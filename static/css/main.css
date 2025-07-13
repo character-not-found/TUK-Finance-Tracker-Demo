@@ -9,21 +9,16 @@ html.dark {
     color: #e2e8f0; /* Light text color */
 }
 
-/* New: Ensure body background changes in dark mode */
 html.dark body {
     background-color: #1a202c; /* Dark background for the body */
 }
 
-/* Adjusted: Darker background for elements previously bg-white (cards, tables, etc.) */
 html.dark .bg-white {
     background-color: #2d3748; /* Darker background for cards/sections */
-    /* Add consistent card styling from login-container */
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.4); /* Consistent shadow for dark mode cards */
-    /* Removed padding: 40px; to maintain consistency with Tailwind's p-6 (24px) */
 }
 
-/* Adjusted: Specific dark mode styles for text colors */
 html.dark .text-gray-800 {
     color: #f7fafc; /* Lighter text for dark mode */
 }
@@ -142,8 +137,7 @@ html.dark .btn-primary-custom:hover {
     background-color: #22c55e; /* Darker green on hover */
 }
 
-
-/* Existing .btn-primary (Tailwind-based) - keep if used for other styles, or remove if only custom is needed */
+/* Existing .btn-primary (Tailwind-based) */
 .btn-primary {
     background-color: #4f46e5; /* Indigo-600 */
     color: white;
@@ -222,11 +216,8 @@ html.dark footer {
 /* Styles for the dropdown menu */
 .dropdown-menu {
     display: none;
-    /* Ensure no gap by removing margin-top and positioning correctly */
-    /* top: 100%; is handled by Tailwind's top-full class now */
 }
 
 .dropdown:hover .dropdown-menu {
     display: block;
 }
-

@@ -1,19 +1,15 @@
 # app/api/routers/income.py
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List, Dict, Any
-import logging # Import logging
-from sqlalchemy.orm import Session # Import Session
-from fastapi import Depends # Ensure Depends is imported
-from app.database import get_db # Import the database dependency
+import logging
+from sqlalchemy.orm import Session
 
-# Relative imports from the 'app' package
-from ... import database
-from ...models import Income
+from app import database
+from app.database import get_db
+from app.models import Income
 
-# Get a logger for this router
 logger = logging.getLogger(__name__)
 
-# Create an API router specific to income
 router = APIRouter(
     prefix="/income",
     tags=["Income"],
@@ -37,10 +33,10 @@ async def get_income_by_id(doc_id: int, db: Session = Depends(get_db)):
     Raises a 404 error if the income is not found.
     """
     logger.info(f"Attempting to retrieve income entry with ID: {doc_id}")
-    inc = database.get_income_by_id(db, doc_id) # Use the database function
+    inc = database.get_income_by_id(db, doc_id)
     if not inc:
         logger.warning(f"Income entry with ID {doc_id} not found.")
-        raise HTTPException(status_code=404, detail=f"Income entry with ID {doc_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Income entry with ID {doc_id} not found")
     logger.info(f"Successfully retrieved income entry with ID: {doc_id}")
     return inc
 
@@ -67,12 +63,12 @@ async def update_income_api(doc_id: int, updates: Dict[str, Any], db: Session = 
     success = database.update_income(db, doc_id, updates)
     if not success:
         logger.warning(f"Income entry with ID {doc_id} not found or update failed.")
-        raise HTTPException(status_code=404, detail=f"Income entry with ID {doc_id} not found or update failed.")
-    # Retrieve the updated income to return it
-    updated_income = database.get_income_by_id(db, doc_id) # Use the database function
-    if not updated_income: # Should not happen if update was successful
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Income entry with ID {doc_id} not found or update failed.")
+    
+    updated_income = database.get_income_by_id(db, doc_id)
+    if not updated_income:
         logger.error(f"Failed to retrieve updated income entry with ID {doc_id} after successful update operation.")
-        raise HTTPException(status_code=500, detail="Failed to retrieve updated income entry.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve updated income entry.")
     logger.info(f"Income entry with ID {doc_id} updated successfully.")
     return updated_income
 
@@ -85,6 +81,6 @@ async def delete_income_api(doc_id: int, db: Session = Depends(get_db)):
     success = database.delete_income(db, doc_id)
     if not success:
         logger.warning(f"Income entry with ID {doc_id} not found or deletion failed.")
-        raise HTTPException(status_code=404, detail=f"Income entry with ID {doc_id} not found or deletion failed.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Income entry with ID {doc_id} not found or deletion failed.")
     logger.info(f"Income entry with ID {doc_id} deleted successfully.")
     return {"message": "Income deleted successfully"}

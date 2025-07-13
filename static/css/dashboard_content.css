@@ -1,16 +1,13 @@
-/* Custom CSS to ensure right alignment for currency cells */
+/* Styles for table cell and header alignment */
 .data-table td.text-right {
     text-align: right;
 }
-/* Custom CSS to ensure right alignment for currency headers */
 .data-table th.text-right {
     text-align: right;
 }
-/* Custom CSS for centered cells */
 .data-table td.text-center {
     text-align: center;
 }
-/* Custom CSS to ensure center alignment for specific table headers */
 .data-table th.text-center {
     text-align: center;
 }
@@ -22,9 +19,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 1.5rem; /* mx-auto mt-6 */
+    margin-top: 1.5rem;
 }
-/* Style for total amount display, now using normal document flow */
+/* Style for total amount display */
 .total-amount-display {
     font-size: 1.1rem;
     font-weight: bold;
@@ -55,8 +52,8 @@ html.dark .profit-loss-display {
 }
 
 .monthly-average-display {
-    font-size: 2.5rem; /* Same font size as profit-loss-display for "same weight" */
-    font-weight: bold; /* Same font weight as profit-loss-display for "same weight" */
+    font-size: 2.5rem;
+    font-weight: bold;
     text-align: center;
 }
 /* Dark mode for monthly-average-display */
@@ -64,7 +61,7 @@ html.dark .monthly-average-display {
     color: #f7fafc; /* Lighter text for dark mode */
 }
 
-/* New style for yearly total display */
+/* Style for yearly total display */
 .yearly-total-display {
     font-size: 1.5rem; /* Slightly smaller than monthly profit/loss, but prominent */
     font-weight: bold;
@@ -76,12 +73,11 @@ html.dark .yearly-total-display {
     color: #f7fafc; /* Lighter text for dark mode */
 }
 
-/* New style for Cash on Hand display */
+/* Style for Cash on Hand display */
 .cash-on-hand-display {
     font-size: 2.5rem; /* Same font size as profit-loss-display */
     font-weight: bold;
     text-align: center;
-    /* Adjusted margin to reduce space */
     margin-top: 5px; /* Reduced margin to bring closer to title */
     margin-bottom: 0; /* Ensure no extra space below */
 }
@@ -94,21 +90,6 @@ html.dark .cash-on-hand-display {
 .cash-on-hand-display + h3 { /* Selects the h3 immediately preceding .cash-on-hand-display */
     margin-bottom: 5px; /* Reduced margin to bring closer to value */
 }
-/* Removed redundant dark mode styles for .bg-white, text-gray-800, text-gray-700 */
-/* These are now handled globally in main.css */
-/* html.dark {
-    background-color: #1a202c;
-    color: #e2e8f0;
-}
-html.dark .bg-white {
-    background-color: #2d3748;
-}
-html.dark .text-gray-800 {
-    color: #f7fafc;
-}
-html.dark .text-gray-700 {
-    color: #cbd5e0;
-} */
 html.dark .data-table thead th {
     background-color: #4a5568; /* Darker gray header */
     color: #e2e8f0;

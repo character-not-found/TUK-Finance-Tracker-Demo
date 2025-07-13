@@ -1,38 +1,30 @@
 # app/config.py
-# This file defines application settings using pydantic-settings.
+# Defines application settings using pydantic-settings for robust configuration management.
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
-    # model_config provides configuration for how settings are loaded.
-    # env_file: Specifies the .env file to load.
-    #           By default, pydantic-settings looks for a file named '.env'.
-    #           We'll use this for local development.
-    # extra='ignore': Ignores any extra fields in the .env file not defined here.
+    # Configuration for loading settings, particularly from .env files.
+    # 'env_file': Specifies the .env file to load for environment variables.
+    # 'extra='ignore'': Allows additional variables in the .env file not explicitly defined here.
+    # 'env_file_encoding='utf-8'': Ensures proper character encoding for the .env file.
     model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_file_encoding='utf-8')
 
-    # --- Core Application Settings ---
-    # DATABASE_URL: The connection string for your database.
-    # This will be different for development, production, and demo.
-    DATABASE_URL: str
+    # Core Application Settings (Values typically loaded from .env)
+    DATABASE_URL: str = Field(..., description="The connection string for the database (e.g., 'sqlite:///./sql_app.db' or 'postgresql://user:password@host:port/dbname').")
 
-    # APP_ENV: Identifies the current environment (e.g., "development", "production", "demo").
-    # Default is "development" if not explicitly set.
-    APP_ENV: str = "development"
+    APP_ENV: str = Field("development", description="Identifies the current environment (e.g., 'development', 'production', 'demo'). Default is 'development' if not set in .env.")
 
-    # SECRET_KEY: Used for security purposes like token signing (crucial for JWTs).
-    # IMPORTANT: GENERATE A REAL, STRONG, RANDOM KEY FOR PRODUCTION!
-    # You can generate one with: import secrets; print(secrets.token_urlsafe(32))
-    SECRET_KEY: str = "SECRET KEY"
+    # SECRET_KEY: Essential for security, used for tasks like token signing (e.g., JWTs).
+    # IMPORTANT: Always ensure this is set to a strong, random key in your .env file for any deployment.
+    # A placeholder is provided for local development, but it MUST be overridden for production.
+    SECRET_KEY: str = "your-super-secret-key-replace-me-in-production"
 
-    # --- Demo Specific Settings (Optional, will be used later on 'demo' branch) ---
-    # These settings are optional and will only be used when APP_ENV is "demo".
-    # They are included here so the Settings class is consistent across branches,
-    # but their values will only be set in the .env.demo file.
-    DEMO_USERNAME: Optional[str] = None
-    DEMO_PASSWORD: Optional[str] = None
+    # Demo-Specific Credentials (Optional, loaded from .env if present for demo functionality)
+    DEMO_USERNAME: Optional[str] = Field(None, description="Optional username for demo mode, loaded from .env.")
+    DEMO_PASSWORD: Optional[str] = Field(None, description="Optional password for demo mode, loaded from .env.")
 
-# Create an instance of the Settings class.
-# This instance will hold all your loaded configuration values.
+# Instantiate settings to load configuration values.
 settings = Settings()

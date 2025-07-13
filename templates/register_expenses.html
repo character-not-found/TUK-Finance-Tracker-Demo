@@ -3,7 +3,6 @@
 {% block title %}Register Expenses - Finance Tracker{% endblock %}
 
 {% block extra_head %}
-    <!-- Any page-specific styles or head elements can go here -->
 <link rel="stylesheet" href="{{ url_for('static', path='css/register_expenses.css') }}">
 {% endblock %}
 
@@ -11,8 +10,7 @@
 <div class="container mx-auto px-4 py-8 max-w-2xl bg-white rounded-lg shadow-lg">
     <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Register New Expense</h2>
 
-    <!-- Expense Type Selection -->
-    <div class="mb-6 form-field"> {# Added form-field #}
+    <div class="mb-6 form-field">
         <label for="expenseType" class="block text-gray-700 text-sm font-bold mb-2">Select Expense Type:</label>
         <select id="expenseType">
             <option value="daily">Daily Expense</option>
@@ -20,22 +18,20 @@
         </select>
     </div>
 
-    <!-- Confirmation Message Area -->
     <div id="confirmationMessage" class="message hidden"></div>
 
-    <!-- Daily Expense Form -->
     <div id="dailyExpenseFormSection" class="form-section">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Daily Expense Details</h3>
         <form id="dailyExpenseForm" class="space-y-4">
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="dailyAmount" class="block text-gray-700 text-sm font-bold mb-2">Amount (€):</label>
                 <input type="number" id="dailyAmount" name="amount" step="0.01" min="0" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="dailyDescription" class="block text-gray-700 text-sm font-bold mb-2">Description:</label>
                 <input type="text" id="dailyDescription" name="description" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="dailyCategory" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
                 <select id="dailyCategory" name="category" required>
                     <option value="">Select a category</option>
@@ -51,11 +47,11 @@
                     <option value="Marketing">Marketing</option>
                 </select>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="dailyCostDate" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
                 <input type="date" id="dailyCostDate" name="cost_date" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="dailyPaymentMethod" class="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
                 <select id="dailyPaymentMethod" name="payment_method" required>
                     <option value="">Select payment method</option>
@@ -70,19 +66,18 @@
         </form>
     </div>
 
-    <!-- Fixed Cost Form -->
     <div id="fixedCostFormSection" class="form-section hidden">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Fixed Cost Details</h3>
         <form id="fixedCostForm" class="space-y-4">
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedAmountEur" class="block text-gray-700 text-sm font-bold mb-2">Amount (€):</label>
                 <input type="number" id="fixedAmountEur" name="amount_eur" step="0.01" min="0" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedDescription" class="block text-gray-700 text-sm font-bold mb-2">Description:</label>
                 <input type="text" id="fixedDescription" name="description" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedCostFrequency" class="block text-gray-700 text-sm font-bold mb-2">Cost Type:</label>
                 <select id="fixedCostFrequency" name="cost_frequency" required>
                     <option value="">Select cost type</option>
@@ -92,7 +87,7 @@
                     <option value="Initial Investment">Initial Investment</option>
                 </select>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedCategory" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
                 <select id="fixedCategory" name="category" required>
                     <option value="">Select a category</option>
@@ -108,15 +103,15 @@
                     <option value="Marketing">Marketing</option>
                 </select>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedRecipient" class="block text-gray-700 text-sm font-bold mb-2">Recipient (Optional):</label>
                 <input type="text" id="fixedRecipient" name="recipient">
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedCostDate" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
                 <input type="date" id="fixedCostDate" name="cost_date" required>
             </div>
-            <div class="form-field"> {# Added form-field #}
+            <div class="form-field">
                 <label for="fixedPaymentMethod" class="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
                 <select id="fixedPaymentMethod" name="payment_method" required>
                     <option value="">Select payment method</option>

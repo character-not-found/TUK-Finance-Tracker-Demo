@@ -59,6 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleDateString('en-US', options);
     }
 
+    // NEW: Function to format date for mobile tables (DD/MM/YY)
+    function formatDateToShortMobile(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString + 'T00:00:00');
+        const options = { day: '2-digit', month: '2-digit', year: '2-digit' };
+        return date.toLocaleDateString('en-GB', options); // Uses DD/MM/YY format
+    }
+
     async function performDelete(docId, tableType) {
         try {
             const response = await fetch(`/${tableType}/${docId}`, {
@@ -247,7 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = tbody.insertRow();
             if (isSearchMode) {
                 const sourceTable = item.sourceTable.replace('-', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                const date = formatDateToDDMonthYYYY(item.cost_date || item.income_date);
+                // NEW: Conditional date formatting for search results table
+                const date = window.innerWidth < 768 ? formatDateToShortMobile(item.cost_date || item.income_date) : formatDateToDDMonthYYYY(item.cost_date || item.income_date);
                 let description = '';
                 let amount = 0;
                 let paymentMethod = '-';
@@ -316,7 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (key.includes('amount') || key.includes('revenue') || key.includes('eur')) {
                         value = formatCurrency(value);
                     } else if (key === 'cost_date' || key === 'income_date') {
-                        value = formatDateToDDMonthYYYY(value);
+                        // NEW: Conditional date formatting for regular tables
+                        value = window.innerWidth < 768 ? formatDateToShortMobile(value) : formatDateToDDMonthYYYY(value);
                     } else if (key === 'payment_method' || key === 'category' || key === 'cost_frequency' || key === 'recipient') {
                         value = value ? value.replace(/_/g, ' ') : '-';
                     }
@@ -466,6 +476,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTableType.value = tableType;
         dynamicFormFields.innerHTML = '';
 
+        // Define a common class string for modal inputs/selects
+        const modalInputClasses = "w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring focus:ring-indigo-300 focus:border-indigo-300";
+
         let fields = [];
         if (tableType === 'daily-expenses') {
             fields = [
@@ -507,7 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.id = field.id;
                 select.name = field.name;
                 select.required = field.required !== undefined ? field.required : true;
-                
+                select.classList.add(...modalInputClasses.split(' ')); // Add Tailwind classes
+
                 if (field.name === 'payment_method' || field.name === 'category' || field.name === 'cost_frequency') {
                     const defaultOption = document.createElement('option');
                     defaultOption.value = "";
@@ -530,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.type = field.type;
                 input.value = entry[field.name];
                 input.required = field.required !== undefined ? field.required : true;
+                input.classList.add(...modalInputClasses.split(' ')); // Add Tailwind classes
                 if (field.type === 'number') {
                     input.step = field.step;
                     input.min = field.min;
@@ -605,4 +620,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadTableData();
+
+    // NEW: Add a resize listener to re-render tables when switching between mobile/desktop
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // Re-load table data to apply responsive date formatting and other table styles
+            loadTableData();
+        }, 200); // Debounce to prevent excessive calls
+    });
 });

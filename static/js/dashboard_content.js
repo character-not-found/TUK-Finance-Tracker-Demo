@@ -13,6 +13,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return date.toLocaleDateString('en-US', options);
     }
 
+    // Function to format date for mobile tables (e.g., DD/MM/YY)
+    function formatDateToShortMobile(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString + 'T00:00:00');
+        const options = { day: '2-digit', month: '2-digit', year: '2-digit' };
+        return date.toLocaleDateString('en-GB', options); // Uses DD/MM/YY format
+    }
+
     function formatCurrency(value) {
         if (typeof value !== 'number' || isNaN(value)) return '0.00 €';
         return new Intl.NumberFormat('fr-FR', {
@@ -78,7 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         cell.classList.add('text-center');
                         value = value !== null && value !== undefined ? value : '-';
                     } else if (headerKey === 'cost_date' || headerKey === 'income_date') {
-                        value = formatDateToDDMonthYYYY(value);
+                        // NEW: Use short date format for mobile, full for desktop
+                        if (window.innerWidth < 768) { // Check if screen is mobile
+                            value = formatDateToShortMobile(value);
+                        } else {
+                            value = formatDateToDDMonthYYYY(value);
+                        }
                     } else if ((headerKey === 'cost_frequency' || headerKey === 'category') && item[headerKey]) {
                         value = item[headerKey].replace(/_/g, ' ');
                     }
@@ -512,19 +525,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dailyExpensesHeaders = ['doc_id', 'cost_date', 'description', 'category', 'amount'];
     const fixedCostsHeaders = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'amount_eur'];
 
+    // Initial data fetch and render
     await fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
     await fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
     await fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
 
     renderAllDashboardElements();
 
+    // Re-render dashboard elements when dark mode is toggled
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                // Re-fetch and render tables and charts to apply new colors/formats
+                fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
+                fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
+                fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
                 renderAllDashboardElements();
             }
         });
     });
 
     observer.observe(document.documentElement, { attributes: true });
+
+    // NEW: Add a resize listener to re-render tables when switching between mobile/desktop
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
+            fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
+            fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
+        }, 200); // Debounce to prevent excessive calls
+    });
 });

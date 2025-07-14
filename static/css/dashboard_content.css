@@ -103,3 +103,66 @@ html.dark .data-table tbody tr:nth-child(even) {
 html.dark .data-table td {
     color: #e2e8f0;
 }
+
+/* Mobile specific adjustments for Dashboard content */
+@media (max-width: 767px) { /* Applies to screens smaller than 768px (md breakpoint) */
+    .container {
+        padding-left: 1rem; /* Reduce horizontal padding for overall container */
+        padding-right: 1rem;
+    }
+
+    .container h2 {
+        font-size: 2rem; /* Adjust main heading size */
+        margin-bottom: 1.5rem; /* Reduce margin below main heading */
+    }
+
+    /* Adjust card padding and spacing */
+    .grid > div { /* Targets the direct children of the grid (the cards) */
+        padding: 1rem; /* Reduce card padding */
+        margin-bottom: 1rem; /* Add some margin between stacked cards */
+    }
+
+    .grid {
+        gap: 1rem; /* Reduce gap between grid items on mobile */
+    }
+
+    /* Adjust headings within cards */
+    .grid > div h3 {
+        font-size: 1.25rem; /* Smaller headings for cards */
+        margin-bottom: 0.75rem; /* Reduce margin below card headings */
+    }
+
+    /* Adjust chart container height for mobile */
+    .chart-container {
+        height: 200px; /* Make charts slightly shorter on mobile */
+        margin-top: 1rem; /* Adjust margin above charts */
+    }
+
+    /* Adjust font sizes for profit/loss, average, cash on hand displays */
+    .profit-loss-display,
+    .monthly-average-display,
+    .cash-on-hand-display {
+        font-size: 2rem; /* Slightly smaller for mobile */
+    }
+
+    .yearly-total-display {
+        font-size: 1.2rem; /* Smaller for mobile */
+        margin-top: 1rem;
+    }
+
+    /* Table responsiveness enhancements */
+    .data-table {
+        font-size: 0.8rem; /* Smaller font for table text */
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.4rem 0.6rem; /* Adjust padding for table cells */
+    }
+
+    /* NEW: Specific adjustment for table headers with currency on mobile */
+    .data-table th {
+        white-space: nowrap; /* Prevent wrapping for headers */
+        font-size: 0.75rem; /* Reduce font size for headers to fit on one line */
+    }
+}

@@ -26,5 +26,4 @@ class Settings(BaseSettings):
     DEMO_USERNAME: Optional[str] = Field(None, description="Optional username for demo mode, loaded from .env.")
     DEMO_PASSWORD: Optional[str] = Field(None, description="Optional password for demo mode, loaded from .env.")
 
-# Instantiate settings to load configuration values.
 settings = Settings()

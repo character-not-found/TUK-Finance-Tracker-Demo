@@ -20,13 +20,8 @@ logger = logging.getLogger(__name__)
 
 class ForceHTTPSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Check if X-Forwarded-Proto is present and indicates HTTPS
         if "x-forwarded-proto" in request.headers and request.headers["x-forwarded-proto"] == "https":
-            # Directly modify the ASGI scope's scheme to 'https'
-            # This is the most fundamental way to tell FastAPI the protocol.
             request.scope["scheme"] = "https"
-            # (Optional: you can keep a logger.info here for confirmation if you like)
-            # logger.info(f"ASGI scope scheme forced to HTTPS: {request.scope['scheme']}")
         response = await call_next(request)
         return response
 
@@ -52,17 +47,39 @@ app.include_router(summary.router)
 async def startup_event():
     logger.info("Application startup event triggered.")
     create_all_tables()
+    logger.info(f"FastAPI is starting with APP_ENV: {settings.APP_ENV}")
 
     db_session = SessionLocal()
     try:
-        current_cash = get_cash_on_hand_balance(db_session)
-        if current_cash.balance == 0.0 and current_cash.doc_id == 1:
-             set_initial_cash_on_hand(db_session, 0.0)
-             logger.info("Cash on hand initialized to 0.0 during startup.")
-    except Exception as e:
-        logger.error(f"Error during cash on hand initialization at startup: {e}", exc_info=True)
+        initial_balance = get_cash_on_hand_balance(db_session)
+        if initial_balance is None:
+            set_initial_cash_on_hand(db_session, 1000.00)
+            logger.info("Initial cash on hand balance set to 1000.00 EUR.")
+        else:
+            logger.info(f"Cash on hand balance already exists: {initial_balance.balance:.2f} EUR.")
     finally:
         db_session.close()
+
+async def get_current_user_token(request: Request):
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        logger.warning("Attempted access to protected route without access token.")
+        raise HTTPException(
+            status_code=status.HTTP_302_FOUND,
+            detail="Not authenticated",
+            headers={"Location": "/login"}
+        )
+    # In a real app, you would validate this token (e.g., JWT verification)
+    # For this demo, we just check its presence.
+    if access_token != "demo_access_token_for_employer":
+        logger.warning(f"Invalid access token: {access_token}")
+        raise HTTPException(
+            status_code=status.HTTP_302_FOUND,
+            detail="Invalid authentication token",
+            headers={"Location": "/login"}
+        )
+    return access_token
+
 
 # --- HTML Endpoints ---
 @app.get("/login", response_class=HTMLResponse, summary="Serve the login page")
@@ -71,30 +88,22 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "datetime": datetime})
 
 @app.get("/", response_class=HTMLResponse, summary="Serve the main dashboard HTML page")
-async def read_root(request: Request, db: Session = Depends(get_db)):
-    access_token = request.cookies.get("access_token")
-
-    # Always redirect to login if no access token is found
-    # This ensures that authentication is enforced regardless of APP_ENV
-    if not access_token:
-        logger.info("No access token found, redirecting to login.")
-        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-
+async def read_root(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
     logger.info("Serving dashboard_content.html")
     return templates.TemplateResponse("dashboard_content.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-expenses", response_class=HTMLResponse, summary="Serve the expense registration page")
-async def register_expenses_page(request: Request, db: Session = Depends(get_db)):
+async def register_expenses_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
     logger.info("Serving register_expenses.html")
     return templates.TemplateResponse("register_expenses.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-income", response_class=HTMLResponse, summary="Serve the income registration page")
-async def register_income_page(request: Request, db: Session = Depends(get_db)):
+async def register_income_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
     logger.info("Serving register_income.html")
     return templates.TemplateResponse("register_income.html", {"request": request, "datetime": datetime})
 
 @app.get("/data-management", response_class=HTMLResponse, summary="Serve the data management page")
-async def data_management_page(request: Request, db: Session = Depends(get_db)):
+async def data_management_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
     logger.info("Serving data_management.html")
     return templates.TemplateResponse("data_management.html", {"request": request, "datetime": datetime})
 
@@ -105,10 +114,14 @@ async def health_check():
 
 # --- Authentication Endpoint ---
 @app.post("/login/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None, db: Session = Depends(get_db)):
+async def login_for_access_token(
+    response: Response, form_data: OAuth2PasswordRequestForm = Depends()
+):  
     if settings.APP_ENV == "demo":
-        if form_data.username == settings.DEMO_USERNAME and form_data.password == settings.DEMO_PASSWORD:
-            logger.info(f"Demo user '{form_data.username}' logged in successfully.")
+        if (
+            form_data.username == settings.DEMO_USERNAME
+            and form_data.password == settings.DEMO_PASSWORD
+        ):
             access_token = "demo_access_token_for_employer"
             expires_at = datetime.now() + timedelta(hours=1)
             response.set_cookie(
@@ -117,7 +130,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                 expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
                 httponly=True,
                 samesite="lax",
-                secure=True,
+                secure=False,
                 path="/"
             )
             return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
@@ -142,7 +155,7 @@ async def logout(response: Response):
         expires=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=False,
         path="/"
     )
     return {"message": "Logged out successfully"}

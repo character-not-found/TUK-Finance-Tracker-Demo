@@ -1,8 +1,13 @@
+// static/js/auth.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const authStatusSpan = document.getElementById('authStatus');
     const logoutButton = document.getElementById('logoutButton');
     const loggedInNavItems = document.getElementById('loggedInNavItems');
-    const messageArea = document.getElementById('authMessageArea'); // Assuming a message area exists in your HTML for auth
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+
+    const messageArea = document.getElementById('authMessageArea');
 
     // Function to display messages
     function showMessage(message, type) {
@@ -27,22 +32,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 authStatusSpan.classList.remove('hidden');
             }
             if (logoutButton) logoutButton.classList.remove('hidden');
+
+            // When logged in:
+            // Remove the force-hide class to make them visible
             if (loggedInNavItems) {
-                loggedInNavItems.classList.remove('hidden');
+                loggedInNavItems.classList.remove('force-hide');
+                // IMPORTANT: DO NOT remove 'hidden' here. Let home.js and Tailwind's md:flex manage it.
+                // loggedInNavItems.classList.remove('hidden'); // REMOVED THIS LINE
             }
-        } else {
+            if (mobileMenu) {
+                mobileMenu.classList.remove('hidden');
+            }
+            if (mobileMenuButton) {
+                mobileMenuButton.classList.remove('force-hide');
+                mobileMenuButton.classList.remove('hidden'); // Also remove 'hidden' for Tailwind's md:hidden to work
+            }
+
+        } else { // Not logged in
             if (authStatusSpan) {
-                if (window.location.pathname !== '/login') {
-                    authStatusSpan.textContent = 'Please log in.';
-                    authStatusSpan.style.color = 'orange';
-                    authStatusSpan.classList.remove('hidden');
-                } else {
-                    authStatusSpan.classList.add('hidden');
-                }
+                authStatusSpan.textContent = '';
+                authStatusSpan.classList.add('hidden');
             }
             if (logoutButton) logoutButton.classList.add('hidden');
+
+            // If not logged in, ensure navigation elements are hidden using force-hide
             if (loggedInNavItems) {
-                loggedInNavItems.classList.add('hidden');
+                loggedInNavItems.classList.add('force-hide');
+                loggedInNavItems.classList.add('hidden'); // Keep 'hidden' for consistency
+                loggedInNavItems.classList.remove('md:flex'); // Ensure md:flex is removed to prevent layout issues
+            }
+            if (mobileMenu) {
+                mobileMenu.classList.add('hidden');
+            }
+            if (mobileMenuButton) {
+                mobileMenuButton.classList.add('force-hide');
+                mobileMenuButton.classList.add('hidden'); // Keep 'hidden' for consistency
             }
         }
     }

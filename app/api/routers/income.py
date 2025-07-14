@@ -77,7 +77,7 @@ async def create_income_api(income: Income, db: Session = Depends(get_db)) -> In
     if 'daily_total_eur' in income_data:
         del income_data['daily_total_eur'] # Remove it if present, as it's a calculated field
 
-    new_income = database.create_income(db, **income_data)
+    new_income = database.add_income(db, income=income)
     
     # After creation, you might want to fetch and return the full object with daily_total_eur calculated
     # Or, if the frontend doesn't need it immediately after creation, you can skip this part.

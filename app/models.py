@@ -1,5 +1,5 @@
 # app/models.py
-from pydantic import BaseModel, Field, ConfigDict # Import ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -34,7 +34,6 @@ class FixedCost(BaseModel):
     """
     Represents a fixed cost entry, which can be annual, monthly, or an initial investment.
     """
-
     doc_id: Optional[int] = Field(None, description="Document ID from database (auto-generated)", validation_alias='id')
     amount_eur: float = Field(..., gt=0, description="Amount of the fixed cost in Euros")
     description: str = Field(..., min_length=3, max_length=200, description="Description of the fixed cost")

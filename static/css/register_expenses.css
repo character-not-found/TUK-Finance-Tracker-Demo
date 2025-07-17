@@ -12,46 +12,46 @@
 }
 
 .message.success {
-    background-color: #d1fae5; /* green-100 */
-    color: #065f46; /* green-800 */
-    border: 1px solid #34d399; /* green-400 */
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #34d399;
 }
 /* Dark mode for success message */
 html.dark .message.success {
-    background-color: #10b981; /* green-500 */
-    color: #ecfdf5; /* green-50 */
-    border: 1px solid #065f46; /* green-800 */
+    background-color: #10b981;
+    color: #ecfdf5;
+    border: 1px solid #065f46;
 }
 
 .message.error {
-    background-color: #fee2e2; /* red-100 */
-    color: #991b1b; /* red-800 */
-    border: 1px solid #f87171; /* red-400 */
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
 }
 /* Dark mode for error message */
 html.dark .message.error {
-    background-color: #ef4444; /* red-500 */
-    color: #fef2f2; /* red-50 */
-    border: 1px solid #991b1b; /* red-800 */
+    background-color: #ef4444;
+    color: #fef2f2;
+    border: 1px solid #991b1b;
 }
 
 /* Responsive adjustments for form fields */
-@media (max-width: 767px) { /* Applies to screens smaller than 768px (md breakpoint) */
+@media (max-width: 767px) {
     .container {
-        padding-left: 1rem; /* Reduce horizontal padding on very small screens */
+        padding-left: 1rem;
         padding-right: 1rem;
     }
 
     .container h2 {
-        font-size: 2rem; /* Slightly smaller main heading on mobile */
+        font-size: 2rem;
     }
 
     .form-section h3 {
-        font-size: 1.5rem; /* Slightly smaller section heading on mobile */
+        font-size: 1.5rem;
     }
 
     .form-field {
-        margin-bottom: 1rem; /* Reduce vertical spacing between form fields */
+        margin-bottom: 1rem;
     }
 
     /* Ensure inputs and selects take full width and have appropriate padding */
@@ -60,22 +60,22 @@ html.dark .message.error {
     .form-field input[type="date"],
     .form-field select,
     .form-field textarea {
-        padding: 0.75rem; /* Slightly less padding for smaller screens */
-        font-size: 1rem; /* Adjust font size for better mobile readability */
+        padding: 0.75rem;
+        font-size: 1rem;
     }
 
     /* Adjust label font size for mobile */
     .form-field label {
-        font-size: 0.875rem; /* Smaller label text */
-        margin-bottom: 0.25rem; /* Reduce space below labels */
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
     }
 
     /* Ensure buttons are full width and have appropriate padding */
     .btn-primary-custom {
-        width: 100%; /* Full width button on mobile */
-        padding: 0.75rem 1rem; /* Adjust padding for mobile button */
-        font-size: 1.125rem; /* Ensure readable font size */
-        height: auto; /* Allow height to adjust based on padding and content */
-        line-height: normal; /* Reset line-height for auto height */
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1.125rem;
+        height: auto;
+        line-height: normal;
     }
 }

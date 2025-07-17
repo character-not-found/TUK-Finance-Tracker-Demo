@@ -47,24 +47,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NEW: Ensure mobile menu is hidden on load if screen is mobile ---
+    // Ensure mobile menu is hidden on load if screen is mobile ---
     if (loggedInNavItems && window.innerWidth < 768) {
         loggedInNavItems.classList.add('hidden');
     }
-    // --- END NEW ---
 
     // Mobile menu toggle functionality
     if (mobileMenuButton && loggedInNavItems) {
         mobileMenuButton.addEventListener('click', () => {
-            loggedInNavItems.classList.toggle('hidden'); // Toggle the 'hidden' class
+            loggedInNavItems.classList.toggle('hidden');
         });
 
         // Close mobile menu when a navigation item (excluding dropdown toggles) is clicked
         loggedInNavItems.querySelectorAll('a').forEach(item => {
-            // Check if it's a direct link, not a dropdown toggle itself
             if (!item.closest('.dropdown')) {
                 item.addEventListener('click', () => {
-                    if (!loggedInNavItems.classList.contains('hidden')) { // Only close if currently open
+                    if (!loggedInNavItems.classList.contains('hidden')) {
                         loggedInNavItems.classList.add('hidden');
                     }
                 });
@@ -76,16 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropdownToggles = document.querySelectorAll('.dropdown > a');
     dropdownToggles.forEach(toggle => {
         toggle.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default link behavior
+            event.preventDefault();
             const dropdownMenu = this.nextElementSibling;
             if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
-                // Close other open dropdowns (unless it's the current one being toggled)
                 document.querySelectorAll('.dropdown-menu').forEach(menu => {
                     if (menu !== dropdownMenu && menu.classList.contains('show')) {
                         menu.classList.remove('show');
                     }
                 });
-                dropdownMenu.classList.toggle('show'); // Toggle a 'show' class
+                dropdownMenu.classList.toggle('show');
             }
         });
     });
@@ -106,18 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 768) {
             if (loggedInNavItems && loggedInNavItems.classList.contains('hidden')) {
-                // If resized to desktop and mobile menu is hidden, ensure it becomes visible
                 loggedInNavItems.classList.remove('hidden');
             }
             // Ensure all dropdowns are hidden when switching to desktop if not already
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
                 menu.classList.remove('show');
             });
-        } else { // Mobile view
+        } else {
             if (loggedInNavItems && !loggedInNavItems.classList.contains('hidden')) {
-                 // If resized to mobile and mobile menu is open, hide it
                  loggedInNavItems.classList.add('hidden');
-                 // Ensure dropdowns are hidden on mobile menu close
                  document.querySelectorAll('.dropdown-menu').forEach(menu => {
                     menu.classList.remove('show');
                 });
@@ -127,6 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize dropdown state (hide all dropdowns on load)
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove('show'); // Ensure they are hidden on load
+        menu.classList.remove('show'); 
     });
 });

@@ -626,8 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            // Re-load table data to apply responsive date formatting and other table styles
             loadTableData();
-        }, 200); // Debounce to prevent excessive calls
+        }, 200);
     });
 });

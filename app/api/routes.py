@@ -1,9 +1,8 @@
 # app/api/routes.py
 from fastapi import FastAPI, Request, HTTPException, status, Depends, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session

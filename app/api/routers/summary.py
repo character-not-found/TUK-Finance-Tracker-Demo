@@ -1,13 +1,13 @@
 # app/api/routers/summary.py
 from fastapi import APIRouter, Query as FastAPIQuery, Depends
-from typing import Dict, Any
-from datetime import datetime, timedelta
+from typing import Dict
+from datetime import datetime
 import logging
 from sqlalchemy.orm import Session
 
 from app import database
 from app.database import get_db
-from app.models import CostFrequency, CashOnHand
+from app.models import CashOnHand
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!dateString) return '-';
         const date = new Date(dateString + 'T00:00:00');
         const options = { day: '2-digit', month: '2-digit', year: '2-digit' };
-        return date.toLocaleDateString('en-GB', options); // Uses DD/MM/YY format
+        return date.toLocaleDateString('en-GB', options);
     }
 
     function formatCurrency(value) {
@@ -536,7 +536,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                // Re-fetch and render tables and charts to apply new colors/formats
                 fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
                 fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
                 fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
@@ -547,7 +546,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     observer.observe(document.documentElement, { attributes: true });
 
-    // NEW: Add a resize listener to re-render tables when switching between mobile/desktop
+    // Resize listener to re-render tables when switching between mobile/desktop
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
@@ -555,6 +554,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);
             fetchData('/daily-expenses/', 'dailyExpensesTable', 'noDailyExpenses', dailyExpensesHeaders);
             fetchData('/fixed-costs/', 'fixedCostsTable', 'noFixedCosts', fixedCostsHeaders);
-        }, 200); // Debounce to prevent excessive calls
+        }, 200);
     });
 });

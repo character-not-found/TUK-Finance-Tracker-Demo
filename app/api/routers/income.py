@@ -1,12 +1,12 @@
 # app/api/routers/income.py
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List, Dict, Any # Keep Dict, Any for potential future uses, but List[Income] is what we return
+from typing import List
 import logging
 from sqlalchemy.orm import Session
 
 from app import database
 from app.database import get_db
-from app.models import Income # Ensure this Income model has attributes for tours_revenue_eur and transfers_revenue_eur
+from app.models import Income
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +24,10 @@ async def get_income(db: Session = Depends(get_db)) -> List[Income]:
     """
     logger.info("Attempting to retrieve all income entries.")
     
-    # Fetch income entries from the database
     incomes_from_db = database.get_all_income(db)
     
-    # Calculate daily_total_eur for each income entry
     processed_incomes = []
     for income_item in incomes_from_db:
-        # Ensure tours_revenue_eur and transfers_revenue_eur are treated as numbers
-        # and handle cases where they might be None
         tours_revenue = income_item.tours_revenue_eur if income_item.tours_revenue_eur is not None else 0.0
         transfers_revenue = income_item.transfers_revenue_eur if income_item.transfers_revenue_eur is not None else 0.0
         
@@ -55,7 +51,6 @@ async def get_income_by_id(doc_id: int, db: Session = Depends(get_db)) -> Income
         logger.warning(f"Income entry with ID {doc_id} not found.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Income entry with ID {doc_id} not found.")
     
-    # Calculate daily_total_eur for the single income entry
     tours_revenue = inc.tours_revenue_eur if inc.tours_revenue_eur is not None else 0.0
     transfers_revenue = inc.transfers_revenue_eur if inc.transfers_revenue_eur is not None else 0.0
     
@@ -70,18 +65,12 @@ async def create_income_api(income: Income, db: Session = Depends(get_db)) -> In
     Creates a new income entry in the database.
     """
     logger.info(f"Attempting to create a new income entry: {income.dict()}")
-    # The 'daily_total_eur' doesn't need to be part of the creation payload
-    # as it's calculated on retrieval. Ensure your database model doesn't expect it for creation.
-    # If income.daily_total_eur is passed in the payload, remove it before creating.
-    income_data = income.dict(exclude_unset=True) # Use exclude_unset to avoid passing unset fields
+    income_data = income.dict(exclude_unset=True)
     if 'daily_total_eur' in income_data:
-        del income_data['daily_total_eur'] # Remove it if present, as it's a calculated field
+        del income_data['daily_total_eur']
 
     new_income = database.add_income(db, income=income)
     
-    # After creation, you might want to fetch and return the full object with daily_total_eur calculated
-    # Or, if the frontend doesn't need it immediately after creation, you can skip this part.
-    # For consistency, let's retrieve it again to include the calculated field.
     if new_income:
         tours_revenue = new_income.tours_revenue_eur if new_income.tours_revenue_eur is not None else 0.0
         transfers_revenue = new_income.transfers_revenue_eur if new_income.transfers_revenue_eur is not None else 0.0
@@ -101,7 +90,7 @@ async def update_income_api(doc_id: int, income: Income, db: Session = Depends(g
     
     updates = income.dict(exclude_unset=True)
     if 'daily_total_eur' in updates:
-        del updates['daily_total_eur'] # Don't try to update a calculated field directly
+        del updates['daily_total_eur']
 
     success = database.update_income(db, doc_id, updates)
     if not success:
@@ -113,7 +102,6 @@ async def update_income_api(doc_id: int, income: Income, db: Session = Depends(g
         logger.error(f"Failed to retrieve updated income entry with ID {doc_id} after successful update operation.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve updated income entry.")
     
-    # Calculate daily_total_eur for the updated income entry
     tours_revenue = updated_income.tours_revenue_eur if updated_income.tours_revenue_eur is not None else 0.0
     transfers_revenue = updated_income.transfers_revenue_eur if updated_income.transfers_revenue_eur is not None else 0.0
     updated_income.daily_total_eur = tours_revenue + transfers_revenue

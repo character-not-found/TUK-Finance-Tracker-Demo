@@ -14,7 +14,7 @@
 /* Chart container styling for responsiveness */
 .chart-container {
     position: relative;
-    height: 250px; /* Fixed height for consistency */
+    height: 250px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -25,30 +25,30 @@
 .total-amount-display {
     font-size: 1.1rem;
     font-weight: bold;
-    color: #374151; /* Dark gray text */
-    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white background */
+    color: #374151;
+    background-color: rgba(255, 255, 255, 0.8);
     padding: 5px 10px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-top: 10px; /* Add margin to separate from legend */
-    text-align: center; /* Center the text within the div */
+    margin-top: 10px;
+    text-align: center;
 }
 /* Dark mode for total amount display */
 html.dark .total-amount-display {
-    color: #e2e8f0; /* Light text color */
-    background-color: rgba(45, 55, 72, 0.8); /* Darker transparent background */
+    color: #e2e8f0;
+    background-color: rgba(45, 55, 72, 0.8);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* Styles for the Net Profit/Loss and Monthly Average display */
 .profit-loss-display {
-    font-size: 2.5rem; /* Larger font size for the main value */
+    font-size: 2.5rem;
     font-weight: bold;
     text-align: center;
 }
 /* Dark mode for profit-loss-display */
 html.dark .profit-loss-display {
-    color: #f7fafc; /* Lighter text for dark mode */
+    color: #f7fafc;
 }
 
 .monthly-average-display {
@@ -58,111 +58,111 @@ html.dark .profit-loss-display {
 }
 /* Dark mode for monthly-average-display */
 html.dark .monthly-average-display {
-    color: #f7fafc; /* Lighter text for dark mode */
+    color: #f7fafc;
 }
 
 /* Style for yearly total display */
 .yearly-total-display {
-    font-size: 1.5rem; /* Slightly smaller than monthly profit/loss, but prominent */
+    font-size: 1.5rem;
     font-weight: bold;
     text-align: center;
-    margin-top: 15px; /* Space from the chart above */
+    margin-top: 15px;
 }
 /* Dark mode for yearly-total-display */
 html.dark .yearly-total-display {
-    color: #f7fafc; /* Lighter text for dark mode */
+    color: #f7fafc;
 }
 
 /* Style for Cash on Hand display */
 .cash-on-hand-display {
-    font-size: 2.5rem; /* Same font size as profit-loss-display */
+    font-size: 2.5rem;
     font-weight: bold;
     text-align: center;
-    margin-top: 5px; /* Reduced margin to bring closer to title */
-    margin-bottom: 0; /* Ensure no extra space below */
+    margin-top: 5px;
+    margin-bottom: 0;
 }
 /* Dark mode for cash-on-hand-display */
 html.dark .cash-on-hand-display {
-    color: #f7fafc; /* Lighter text for dark mode */
+    color: #f7fafc;
 }
 
 /* Adjusted style for the title of Cash on Hand */
-.cash-on-hand-display + h3 { /* Selects the h3 immediately preceding .cash-on-hand-display */
-    margin-bottom: 5px; /* Reduced margin to bring closer to value */
+.cash-on-hand-display + h3 {
+    margin-bottom: 5px;
 }
 html.dark .data-table thead th {
-    background-color: #4a5568; /* Darker gray header */
+    background-color: #4a5568;
     color: #e2e8f0;
 }
 html.dark .data-table tbody tr:nth-child(odd) {
-    background-color: #2d3748; /* Darker row */
+    background-color: #2d3748;
 }
 html.dark .data-table tbody tr:nth-child(even) {
-    background-color: #4a5568; /* Even darker row */
+    background-color: #4a5568;
 }
 html.dark .data-table td {
     color: #e2e8f0;
 }
 
 /* Mobile specific adjustments for Dashboard content */
-@media (max-width: 767px) { /* Applies to screens smaller than 768px (md breakpoint) */
+@media (max-width: 767px) {
     .container {
-        padding-left: 1rem; /* Reduce horizontal padding for overall container */
+        padding-left: 1rem;
         padding-right: 1rem;
     }
 
     .container h2 {
-        font-size: 2rem; /* Adjust main heading size */
-        margin-bottom: 1.5rem; /* Reduce margin below main heading */
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     /* Adjust card padding and spacing */
-    .grid > div { /* Targets the direct children of the grid (the cards) */
-        padding: 1rem; /* Reduce card padding */
-        margin-bottom: 1rem; /* Add some margin between stacked cards */
+    .grid > div {
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
 
     .grid {
-        gap: 1rem; /* Reduce gap between grid items on mobile */
+        gap: 1rem;
     }
 
     /* Adjust headings within cards */
     .grid > div h3 {
-        font-size: 1.25rem; /* Smaller headings for cards */
-        margin-bottom: 0.75rem; /* Reduce margin below card headings */
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
     }
 
     /* Adjust chart container height for mobile */
     .chart-container {
-        height: 200px; /* Make charts slightly shorter on mobile */
-        margin-top: 1rem; /* Adjust margin above charts */
+        height: 200px;
+        margin-top: 1rem;
     }
 
     /* Adjust font sizes for profit/loss, average, cash on hand displays */
     .profit-loss-display,
     .monthly-average-display,
     .cash-on-hand-display {
-        font-size: 2rem; /* Slightly smaller for mobile */
+        font-size: 2rem;
     }
 
     .yearly-total-display {
-        font-size: 1.2rem; /* Smaller for mobile */
+        font-size: 1.2rem;
         margin-top: 1rem;
     }
 
     /* Table responsiveness enhancements */
     .data-table {
-        font-size: 0.8rem; /* Smaller font for table text */
+        font-size: 0.8rem;
     }
 
     .data-table th,
     .data-table td {
-        padding: 0.4rem 0.6rem; /* Adjust padding for table cells */
+        padding: 0.4rem 0.6rem;
     }
 
-    /* NEW: Specific adjustment for table headers with currency on mobile */
+    /* Specific adjustment for table headers with currency on mobile */
     .data-table th {
-        white-space: nowrap; /* Prevent wrapping for headers */
-        font-size: 0.75rem; /* Reduce font size for headers to fit on one line */
+        white-space: nowrap;
+        font-size: 0.75rem;
     }
 }

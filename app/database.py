@@ -1,5 +1,5 @@
 # app/database.py
-# Implements database operations using SQLAlchemy for the cash management system.
+# Implements database operations using SQLAlchemy
 
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Enum as SQLEnum, func, and_
 from sqlalchemy.ext.declarative import declarative_base
@@ -44,7 +44,7 @@ class DBFixedCost(Base):
     cost_frequency = Column(SQLEnum(CostFrequency), nullable=False)
     category = Column(SQLEnum(ExpenseCategory), nullable=False)
     recipient = Column(String, nullable=True)
-    cost_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
+    cost_date = Column(String, nullable=False)
     payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
 
@@ -54,14 +54,14 @@ class DBDailyExpense(Base):
     amount = Column(Float, nullable=False)
     description = Column(String, nullable=False)
     category = Column(SQLEnum(ExpenseCategory), nullable=False)
-    cost_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
+    cost_date = Column(String, nullable=False)
     payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
 
 class DBIncome(Base):
     __tablename__ = "income"
     id = Column(Integer, primary_key=True, index=True)
-    income_date = Column(String, nullable=False) # Stored as 'YYYY-MM-DD' string
+    income_date = Column(String, nullable=False)
     tours_revenue_eur = Column(Float, nullable=False)
     transfers_revenue_eur = Column(Float, nullable=False)
     hours_worked = Column(Float, nullable=False)
@@ -69,7 +69,6 @@ class DBIncome(Base):
 
 # --- Database Dependency for FastAPI ---
 def get_db():
-    """Provides a SQLAlchemy session for FastAPI endpoint dependencies."""
     db = SessionLocal()
     try:
         yield db
@@ -99,7 +98,6 @@ def update_cash_on_hand_balance(db_session: Session, amount: float):
     logger.info(f"Cash on hand updated by {amount:.2f}. New balance: {new_balance:.2f}")
 
 def set_initial_cash_on_hand(db_session: Session, initial_balance: float) -> CashOnHand:
-    # This function is now used by reset_cash_on_hand_balance
     db_session.query(DBCashOnHand).delete()
     db_session.commit()
     initial_balance_data = DBCashOnHand(balance=round(initial_balance, 2), last_updated=datetime.now())
@@ -392,6 +390,7 @@ def reset_cash_on_hand_balance(db_session: Session, initial_balance: float = 0.0
     # This function now re-uses set_initial_cash_on_hand to ensure a clean state
     set_initial_cash_on_hand(db_session, initial_balance)
     logger.info(f"Cash on hand balance reset to {initial_balance}.")
+
 
 
 # --- Functions for Summaries ---

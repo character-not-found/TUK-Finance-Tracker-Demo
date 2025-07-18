@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import database
 from app.database import get_db
-from app.models import Income
+from app.models import Income, AggregatedIncome
 
 logger = logging.getLogger(__name__)
 
@@ -16,25 +16,31 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/", response_model=List[Income], summary="Retrieve all income entries")
-async def get_income(db: Session = Depends(get_db)) -> List[Income]:
+@router.get("/", response_model=List[AggregatedIncome], summary="Retrieve all aggregated income entries by date")
+async def get_aggregated_income(db: Session = Depends(get_db)) -> List[AggregatedIncome]:
     """
-    Retrieves a list of all income entries from the database and calculates
-    the daily_total_eur for each entry.
+    Retrieves a list of all income entries from the database, aggregated by date.
     """
-    logger.info("Attempting to retrieve all income entries.")
-    
+    logger.info("Attempting to retrieve all aggregated income entries.")
+    aggregated_incomes = database.get_aggregated_income_by_date(db)
+    logger.info(f"Successfully retrieved {len(aggregated_incomes)} aggregated income entries.")
+    return aggregated_incomes
+
+@router.get("/all-individual", response_model=List[Income], summary="Retrieve all individual income entries")
+async def get_all_individual_income(db: Session = Depends(get_db)) -> List[Income]:
+    """
+    Retrieves a list of all individual income entries from the database.
+    This endpoint is for internal use where non-aggregated data is needed (e.g., calculations).
+    """
+    logger.info("Attempting to retrieve all individual income entries.")
     incomes_from_db = database.get_all_income(db)
-    
     processed_incomes = []
     for income_item in incomes_from_db:
         tours_revenue = income_item.tours_revenue_eur if income_item.tours_revenue_eur is not None else 0.0
         transfers_revenue = income_item.transfers_revenue_eur if income_item.transfers_revenue_eur is not None else 0.0
-        
         income_item.daily_total_eur = tours_revenue + transfers_revenue
         processed_incomes.append(income_item)
-
-    logger.info(f"Successfully retrieved and processed {len(processed_incomes)} income entries.")
+    logger.info(f"Successfully retrieved and processed {len(processed_incomes)} individual income entries.")
     return processed_incomes
 
 @router.get("/{doc_id}", response_model=Income, summary="Retrieve a specific income entry by ID")

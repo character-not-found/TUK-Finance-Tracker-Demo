@@ -74,6 +74,19 @@ class Income(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class AggregatedIncome(BaseModel):
+    """
+    Represents an aggregated income entry for a specific date.
+    Note: doc_id is not included as it aggregates multiple records.
+    """
+    income_date: str = Field(..., description="Date of the aggregated income (YYYY-MM-DD)")
+    total_tours_revenue_eur: float = Field(..., ge=0, description="Total revenue from tours for the day in Euros")
+    total_transfers_revenue_eur: float = Field(..., ge=0, description="Total revenue from transfers for the day in Euros")
+    total_daily_income_eur: float = Field(..., ge=0, description="Total income for the day in Euros")
+    total_hours_worked: float = Field(..., ge=0, description="Total hours worked for the day")
+
+    model_config = ConfigDict(from_attributes=True)
+
 class CashOnHand(BaseModel):
     """
     Represents the current cash on hand balance.

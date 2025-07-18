@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (headerKey.includes('amount') || headerKey.includes('revenue') || headerKey.includes('eur')) {
                         cell.classList.add('text-right');
                         value = formatCurrency(value);
-                    } else if (tableId === 'incomeTable' && headerKey === 'hours_worked') {
+                    } else if (headerKey === 'hours_worked' || headerKey === 'total_hours_worked') {
                         cell.classList.add('text-center');
                         value = value !== null && value !== undefined ? value : '-';
                     } else if (headerKey === 'cost_date' || headerKey === 'income_date') {
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!monthlySummaryResponse.ok) throw new Error(`HTTP error! status: ${monthlySummaryResponse.status}`);
             const monthlySummaryData = await monthlySummaryResponse.json();
 
-            const incomeTableResponse = await fetch('/income/');
+            const incomeTableResponse = await fetch('/income/all-individual');
             if (!incomeTableResponse.ok) throw new Error(`HTTP error! status: ${incomeTableResponse.status}`);
             const incomeTableData = await incomeTableResponse.json();
 
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const incomeHeaders = ['doc_id', 'income_date', 'tours_revenue_eur', 'transfers_revenue_eur', 'daily_total_eur', 'hours_worked'];
+    const incomeHeaders = ['income_date', 'total_tours_revenue_eur', 'total_transfers_revenue_eur', 'total_daily_income_eur', 'total_hours_worked'];
     const dailyExpensesHeaders = ['doc_id', 'cost_date', 'description', 'category', 'payment_method', 'amount'];
     const fixedCostsHeaders = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'payment_method', 'amount_eur'];
 

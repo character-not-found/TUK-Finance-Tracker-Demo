@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any
 from collections import defaultdict
 import logging
 
-from .models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, CashOnHand, PaymentMethod
+from .models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, CashOnHand, PaymentMethod, AggregatedIncome
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -414,6 +414,26 @@ def get_income_by_date_range(db_session: Session, start_date: str, end_date: str
     ).all()
     logger.info(f"Retrieved {len(incomes)} income entries between {start_date} and {end_date}.")
     return [Income.model_validate(inc) for inc in incomes]
+
+def get_aggregated_income_by_date(db_session: Session) -> List[AggregatedIncome]:
+    """
+    Retrieves and aggregates income entries by income_date.
+    """
+    results = db_session.query(
+        DBIncome.income_date,
+        func.sum(DBIncome.tours_revenue_eur).label('total_tours_revenue_eur'),
+        func.sum(DBIncome.transfers_revenue_eur).label('total_transfers_revenue_eur'),
+        func.sum(DBIncome.tours_revenue_eur + DBIncome.transfers_revenue_eur).label('total_daily_income_eur'),
+        func.sum(DBIncome.hours_worked).label('total_hours_worked')
+    ).group_by(DBIncome.income_date).order_by(DBIncome.income_date.desc()).all()
+
+    aggregated_incomes = []
+    for row in results:
+        # Convert SQLAlchemy Row to a dictionary, then validate with Pydantic model
+        aggregated_incomes.append(AggregatedIncome.model_validate(row._asdict()))
+    
+    logger.info(f"Retrieved {len(aggregated_incomes)} aggregated income entries.")
+    return aggregated_incomes
 
 def get_monthly_summary(db_session: Session, year: int, month: int) -> Dict[str, float]:
     start_date = f"{year}-{month:02d}-01"

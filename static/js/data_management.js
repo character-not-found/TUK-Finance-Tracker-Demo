@@ -59,12 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleDateString('en-US', options);
     }
 
-    // NEW: Function to format date for mobile tables (DD/MM/YY)
     function formatDateToShortMobile(dateString) {
         if (!dateString) return '-';
         const date = new Date(dateString + 'T00:00:00');
         const options = { day: '2-digit', month: '2-digit', year: '2-digit' };
-        return date.toLocaleDateString('en-GB', options); // Uses DD/MM/YY format
+        return date.toLocaleDateString('en-GB', options);
     }
 
     async function performDelete(docId, tableType) {
@@ -94,18 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Custom confirmation modal elements
     const confirmModal = document.getElementById('confirmModal');
     const confirmMessage = document.getElementById('confirmMessage');
     const confirmYesBtn = document.getElementById('confirmYes');
     const confirmNoBtn = document.getElementById('confirmNo');
 
-    let confirmAction = null; // Stores the function to call on 'Yes'
+    let confirmAction = null;
 
     function showConfirmModal(message, onConfirm) {
         confirmMessage.textContent = message;
         confirmAction = onConfirm;
-        confirmModal.style.display = 'flex'; // Show the modal
+        confirmModal.style.display = 'flex';
     }
 
     function hideConfirmModal() {
@@ -127,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         hideConfirmModal();
     });
 
-    // Replace direct `confirm()` calls with `showConfirmModal`
     function handleDeleteRow(event) {
         const docId = event.target.dataset.docId;
         const tableType = event.target.dataset.tableType;
@@ -255,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = tbody.insertRow();
             if (isSearchMode) {
                 const sourceTable = item.sourceTable.replace('-', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                // NEW: Conditional date formatting for search results table
                 const date = window.innerWidth < 768 ? formatDateToShortMobile(item.cost_date || item.income_date) : formatDateToDDMonthYYYY(item.cost_date || item.income_date);
                 let description = '';
                 let amount = 0;
@@ -325,10 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (key.includes('amount') || key.includes('revenue') || key.includes('eur')) {
                         value = formatCurrency(value);
                     } else if (key === 'cost_date' || key === 'income_date') {
-                        // NEW: Conditional date formatting for regular tables
                         value = window.innerWidth < 768 ? formatDateToShortMobile(value) : formatDateToDDMonthYYYY(value);
                     } else if (key === 'payment_method' || key === 'category' || key === 'cost_frequency' || key === 'recipient') {
-                        value = value ? value.replace(/_/g, ' ') : '-';
+                        value = value ? String(value).replace(/_/g, ' ') : '-';
                     }
 
                     cell.classList.add(alignmentClass);
@@ -362,6 +357,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedMonth = monthSelect.value;
 
         let endpoint = `/${selectedTable}/`;
+        // If income table is selected, fetch individual entries
+        if (selectedTable === 'income') {
+            endpoint = '/income/all-individual';
+        }
+
         try {
             const response = await fetch(endpoint);
             if (!response.ok) {
@@ -412,6 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             for (const tableType of tableTypes) {
+                let endpoint = `/${tableType}/`;
+                if (tableType === 'income') {
+                    endpoint = '/income/all-individual';
+                }
+
                 const response = await fetch(`/${tableType}/`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status} for ${tableType}`);
@@ -429,9 +434,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             match = true;
                             break;
                         }
-                        if (key === 'payment_method' && item[key] && item[key].toLowerCase().includes(query)) {
-                            match = true;
-                            break;
+                        if (['payment_method', 'category', 'cost_frequency'].includes(key) && item[key]) {
+                            if (String(item[key]).toLowerCase().replace(/_/g, ' ').includes(query)) {
+                                match = true;
+                                break;
+                            }
                         }
                     }
                     if (match) {
@@ -484,19 +491,19 @@ document.addEventListener('DOMContentLoaded', () => {
             fields = [
                 { id: 'editDailyAmount', name: 'amount', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount, required: true },
                 { id: 'editDailyDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
-                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'], required: true },
+                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['GARAGE', 'TUK_MAINTENANCE', 'DIESEL', 'FOOD', 'ELECTRICITY', 'OTHERS', 'INSURANCE', 'LICENSES', 'VEHICLE_PURCHASE', 'MARKETING'], required: true },
                 { id: 'editDailyCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
-                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
+                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['CASH', 'BANK_TRANSFER', 'DEBIT_CARD'], required: true }
             ];
         } else if (tableType === 'fixed-costs') {
             fields = [
                 { id: 'editFixedAmountEur', name: 'amount_eur', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount_eur, required: true },
                 { id: 'editFixedDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
-                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['Annual', 'Monthly', 'One-Off', 'Initial Investment'], required: true },
-                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing'], required: true },
+                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['ANNUAL', 'MONTHLY', 'ONE_OFF', 'INITIAL_INVESTMENT'], required: true },
+                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['GARAGE', 'TUK_MAINTENANCE', 'DIESEL', 'FOOD', 'ELECTRICITY', 'OTHERS', 'INSURANCE', 'LICENSES', 'VEHICLE_PURCHASE', 'MARKETING'], required: true },
                 { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient, required: false },
                 { id: 'editFixedCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
-                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
+                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['CASH', 'BANK_TRANSFER', 'DEBIT_CARD'], required: true }
             ];
         } else if (tableType === 'income') {
             fields = [
@@ -520,22 +527,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.id = field.id;
                 select.name = field.name;
                 select.required = field.required !== undefined ? field.required : true;
-                select.classList.add(...modalInputClasses.split(' ')); // Add Tailwind classes
+                select.classList.add(...modalInputClasses.split(' '));
 
-                if (field.name === 'payment_method' || field.name === 'category' || field.name === 'cost_frequency') {
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = "";
-                    defaultOption.textContent = `Select ${field.label.replace(':', '')}`;
-                    select.appendChild(defaultOption);
-                }
-
-                field.options.forEach(optionText => {
+                // Ensure enum values are correctly matched and displayed
+                field.options.forEach(optionValue => {
                     const option = document.createElement('option');
-                    option.value = optionText;
-                    option.textContent = optionText;
+                    option.value = optionValue;
+                    // For display, replace underscores with spaces
+                    option.textContent = String(optionValue).replace(/_/g, ' ');
+                    // Match the actual value from the data, which might be an enum member string
+                    if (entry[field.name] && String(optionValue).toUpperCase() === String(entry[field.name]).toUpperCase()) {
+                        option.selected = true;
+                    }
                     select.appendChild(option);
                 });
-                select.value = entry[field.name] || '';
+                // Fallback if no option is selected, ensure the value is set
+                if (!select.value && entry[field.name]) {
+                    select.value = entry[field.name];
+                }
                 div.appendChild(select);
             } else {
                 const input = document.createElement('input');
@@ -544,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.type = field.type;
                 input.value = entry[field.name];
                 input.required = field.required !== undefined ? field.required : true;
-                input.classList.add(...modalInputClasses.split(' ')); // Add Tailwind classes
+                input.classList.add(...modalInputClasses.split(' '));
                 if (field.type === 'number') {
                     input.step = field.step;
                     input.min = field.min;
@@ -559,6 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal() {
         entryModal.style.display = 'none';
+        hideConfirmModal(); // Ensure confirmation modal is also hidden
     }
 
     editForm.addEventListener('submit', async (event) => {
@@ -621,7 +631,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadTableData();
 
-    // NEW: Add a resize listener to re-render tables when switching between mobile/desktop
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);

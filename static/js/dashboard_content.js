@@ -522,8 +522,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const incomeHeaders = ['doc_id', 'income_date', 'tours_revenue_eur', 'transfers_revenue_eur', 'daily_total_eur', 'hours_worked'];
-    const dailyExpensesHeaders = ['doc_id', 'cost_date', 'description', 'category', 'amount'];
-    const fixedCostsHeaders = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'amount_eur'];
+    const dailyExpensesHeaders = ['doc_id', 'cost_date', 'description', 'category', 'payment_method', 'amount'];
+    const fixedCostsHeaders = ['doc_id', 'cost_date', 'description', 'cost_frequency', 'category', 'recipient', 'payment_method', 'amount_eur'];
 
     // Initial data fetch and render
     await fetchData('/income/', 'incomeTable', 'noIncome', incomeHeaders);

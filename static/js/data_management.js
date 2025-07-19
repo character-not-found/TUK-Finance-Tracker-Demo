@@ -266,8 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     amount = item.amount_eur;
                     paymentMethod = item.payment_method || '-';
                 } else if (item.sourceTable === 'income') {
+                    // For search results, show individual income details
                     description = `Tours: ${formatCurrency(item.tours_revenue_eur)}, Transfers: ${formatCurrency(item.transfers_revenue_eur)}`;
                     amount = item.tours_revenue_eur + item.transfers_revenue_eur;
+                    // Income entries don't have payment_method, so keep it '-'
                 }
 
                 const idCell = row.insertCell();
@@ -312,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtn.addEventListener('click', handleDeleteRow);
                 actionCell.appendChild(deleteBtn);
 
-            } else {
+            } else { // Regular table view (non-search mode)
                 dataKeys.forEach(key => {
                     const cell = row.insertCell();
                     let value = item[key];
@@ -408,16 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let allResults = [];
-        const tableTypes = ['daily-expenses', 'fixed-costs', 'income'];
+        const tableTypes = ['daily-expenses', 'fixed-costs', 'income']; // 'income' here will fetch individual
 
         try {
             for (const tableType of tableTypes) {
                 let endpoint = `/${tableType}/`;
+                // For global search, always fetch individual income entries
                 if (tableType === 'income') {
                     endpoint = '/income/all-individual';
                 }
 
-                const response = await fetch(`/${tableType}/`);
+                const response = await fetch(endpoint);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status} for ${tableType}`);
                 }
@@ -434,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             match = true;
                             break;
                         }
+                        // Handle enum values for search
                         if (['payment_method', 'category', 'cost_frequency'].includes(key) && item[key]) {
                             if (String(item[key]).toLowerCase().replace(/_/g, ' ').includes(query)) {
                                 match = true;
@@ -483,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTableType.value = tableType;
         dynamicFormFields.innerHTML = '';
 
-        // Define a common class string for modal inputs/selects
         const modalInputClasses = "w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:ring focus:ring-indigo-300 focus:border-indigo-300";
 
         let fields = [];
@@ -491,19 +494,19 @@ document.addEventListener('DOMContentLoaded', () => {
             fields = [
                 { id: 'editDailyAmount', name: 'amount', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount, required: true },
                 { id: 'editDailyDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
-                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['GARAGE', 'TUK_MAINTENANCE', 'DIESEL', 'FOOD', 'ELECTRICITY', 'OTHERS', 'INSURANCE', 'LICENSES', 'VEHICLE_PURCHASE', 'MARKETING'], required: true },
+                { id: 'editDailyCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing', 'Non-Business Related'], required: true },
                 { id: 'editDailyCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
-                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['CASH', 'BANK_TRANSFER', 'DEBIT_CARD'], required: true }
+                { id: 'editDailyPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
             ];
         } else if (tableType === 'fixed-costs') {
             fields = [
                 { id: 'editFixedAmountEur', name: 'amount_eur', label: 'Amount (€)', type: 'number', step: '0.01', min: '0', value: entry.amount_eur, required: true },
                 { id: 'editFixedDescription', name: 'description', label: 'Description', type: 'text', value: entry.description, required: true },
-                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['ANNUAL', 'MONTHLY', 'ONE_OFF', 'INITIAL_INVESTMENT'], required: true },
-                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['GARAGE', 'TUK_MAINTENANCE', 'DIESEL', 'FOOD', 'ELECTRICITY', 'OTHERS', 'INSURANCE', 'LICENSES', 'VEHICLE_PURCHASE', 'MARKETING'], required: true },
+                { id: 'editFixedCostFrequency', name: 'cost_frequency', label: 'Cost Type', type: 'select', value: entry.cost_frequency, options: ['Annual', 'Monthly', 'One-Off', 'Initial Investment'], required: true },
+                { id: 'editFixedCategory', name: 'category', label: 'Category', type: 'select', value: entry.category, options: ['Garage', 'Tuk Maintenance', 'Diesel', 'Food', 'Electricity', 'Others', 'Insurance', 'Licenses', 'Vehicle Purchase', 'Marketing', 'Non-Business Related'], required: true },
                 { id: 'editFixedRecipient', name: 'recipient', label: 'Recipient', type: 'text', value: entry.recipient, required: false },
                 { id: 'editFixedCostDate', name: 'cost_date', label: 'Date', type: 'date', value: entry.cost_date, required: true },
-                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['CASH', 'BANK_TRANSFER', 'DEBIT_CARD'], required: true }
+                { id: 'editFixedPaymentMethod', name: 'payment_method', label: 'Payment Method', type: 'select', value: entry.payment_method, options: ['Cash', 'Bank Transfer', 'Debit Card'], required: true }
             ];
         } else if (tableType === 'income') {
             fields = [
@@ -529,23 +532,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.required = field.required !== undefined ? field.required : true;
                 select.classList.add(...modalInputClasses.split(' '));
 
-                // Ensure enum values are correctly matched and displayed
                 field.options.forEach(optionValue => {
                     const option = document.createElement('option');
                     option.value = optionValue;
-                    // For display, replace underscores with spaces
                     option.textContent = String(optionValue).replace(/_/g, ' ');
-                    // Match the actual value from the data, which might be an enum member string
                     if (entry[field.name] && String(optionValue).toUpperCase() === String(entry[field.name]).toUpperCase()) {
                         option.selected = true;
                     }
                     select.appendChild(option);
                 });
-                // Fallback if no option is selected, ensure the value is set
                 if (!select.value && entry[field.name]) {
                     select.value = entry[field.name];
                 }
                 div.appendChild(select);
+
+                // Add event listener for category change in modal to auto-select Cash
+                if (field.id === 'editDailyCategory' || field.id === 'editFixedCategory') {
+                    select.addEventListener('change', (e) => {
+                        const currentPaymentMethodSelect = document.getElementById(tableType === 'daily-expenses' ? 'editDailyPaymentMethod' : 'editFixedPaymentMethod');
+                        if (e.target.value === 'NON_BUSINESS_RELATED') {
+                            currentPaymentMethodSelect.value = 'CASH';
+                            currentPaymentMethodSelect.disabled = true;
+                        } else {
+                            currentPaymentMethodSelect.disabled = false;
+                        }
+                    });
+                    // Initialize state if category is already NON_BUSINESS_RELATED
+                    if (entry.category === 'NON_BUSINESS_RELATED') {
+                        const currentPaymentMethodSelect = document.getElementById(tableType === 'daily-expenses' ? 'editDailyPaymentMethod' : 'editFixedPaymentMethod');
+                        if (currentPaymentMethodSelect) {
+                            currentPaymentMethodSelect.value = 'CASH';
+                            currentPaymentMethodSelect.disabled = true;
+                        }
+                    }
+                }
+
             } else {
                 const input = document.createElement('input');
                 input.id = field.id;

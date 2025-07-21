@@ -578,3 +578,28 @@ def create_all_tables(engine_param=None):
     target_engine = engine_param if engine_param else engine
     Base.metadata.create_all(bind=target_engine)
     logger.info("Database tables created successfully (if they didn't already exist).")
+
+# --- Functions for clearing all data (for development/testing) ---
+def clear_all_fixed_costs(db_session: Session):
+    """Deletes all fixed cost entries from the database."""
+    num_deleted = db_session.query(DBFixedCost).delete()
+    db_session.commit()
+    logger.info(f"Cleared {num_deleted} fixed cost entries.")
+
+def clear_all_daily_expenses(db_session: Session):
+    """Deletes all daily expense entries from the database."""
+    num_deleted = db_session.query(DBDailyExpense).delete()
+    db_session.commit()
+    logger.info(f"Cleared {num_deleted} daily expense entries.")
+
+def clear_all_income(db_session: Session):
+    """Deletes all income entries from the database."""
+    num_deleted = db_session.query(DBIncome).delete()
+    db_session.commit()
+    logger.info(f"Cleared {num_deleted} income entries.")
+
+def reset_cash_on_hand_balance(db_session: Session, initial_balance: float = 0.0):
+    """Resets the cash on hand balance to a specified initial value."""
+    # This function now re-uses set_initial_cash_on_hand to ensure a clean state
+    set_initial_cash_on_hand(db_session, initial_balance)
+    logger.info(f"Cash on hand balance reset to {initial_balance}.")

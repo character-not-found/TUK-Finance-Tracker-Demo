@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from collections import defaultdict
 import logging
+import calendar
 
 from .models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, CashOnHand, PaymentMethod, AggregatedIncome
 from app.config import settings
@@ -75,6 +76,7 @@ def get_cash_on_hand_balance(db_session: Session) -> CashOnHand:
         db_session.commit()
         db_session.refresh(initial_balance_data)
         logger.info("Initialized cash on hand balance to 0.0.")
+        # Ensure that the validated model is returned even if it's the newly created one
         return CashOnHand.model_validate(initial_balance_data)
     logger.debug(f"Retrieved cash on hand balance: {balance_entry.balance}")
     return CashOnHand.model_validate(balance_entry)
@@ -82,6 +84,7 @@ def get_cash_on_hand_balance(db_session: Session) -> CashOnHand:
 def update_cash_on_hand_balance(db_session: Session, amount: float):
     current_balance_entry = get_cash_on_hand_balance(db_session)
     new_balance = current_balance_entry.balance + amount
+    # Corrected: Use current_balance_entry.doc_id instead of .id
     db_session.query(DBCashOnHand).filter(DBCashOnHand.id == current_balance_entry.doc_id).update(
         {'balance': round(new_balance, 2), 'last_updated': datetime.now()}
     )
@@ -113,9 +116,13 @@ def add_fixed_cost(db_session: Session, cost: FixedCost) -> FixedCost:
     db_session.commit()
     db_session.refresh(db_cost)
     logger.info(f"Added fixed cost: {cost.description} with ID {db_cost.id}")
-    if cost.payment_method == PaymentMethod.CASH:
+    NON_PROFIT_CATEGORIES = {ExpenseCategory.NON_BUSINESS_RELATED, ExpenseCategory.BANK_DEPOSIT}
+    if cost.payment_method == PaymentMethod.CASH and cost.category not in NON_PROFIT_CATEGORIES:
         update_cash_on_hand_balance(db_session, -cost.amount_eur)
-        logger.info(f"Cash on hand decreased by {cost.amount_eur:.2f} for fixed cost (cash payment).")
+        logger.info(f"Cash on hand decreased by {cost.amount_eur:.2f} for fixed cost (cash payment, business related).")
+    elif cost.payment_method == PaymentMethod.CASH and cost.category in NON_PROFIT_CATEGORIES:
+        update_cash_on_hand_balance(db_session, -cost.amount_eur)
+        logger.info(f"Cash on hand decreased by {cost.amount_eur:.2f} for fixed cost (cash payment, non-profit related).")
     return FixedCost.model_validate(db_cost)
 
 def get_all_fixed_costs(db_session: Session) -> List[FixedCost]:
@@ -139,6 +146,7 @@ def update_fixed_cost(db_session: Session, doc_id: int, updates: Dict[str, Any])
 
     old_amount = old_cost.amount_eur
     old_payment_method = old_cost.payment_method
+    old_category = old_cost.category
 
     if 'cost_frequency' in updates and isinstance(updates['cost_frequency'], str):
         updates['cost_frequency'] = CostFrequency(updates['cost_frequency'])
@@ -157,37 +165,62 @@ def update_fixed_cost(db_session: Session, doc_id: int, updates: Dict[str, Any])
         new_cost = get_fixed_cost_by_id(db_session, doc_id)
         new_amount = new_cost.amount_eur
         new_payment_method = new_cost.payment_method
+        new_category = new_cost.category
 
-        # Adjust cash on hand based on category and payment method changes
-        if old_cost.category != ExpenseCategory.NON_BUSINESS_RELATED and new_cost.category != ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH and new_payment_method != PaymentMethod.CASH:
-                update_cash_on_hand_balance(db_session, old_amount)
-                logger.info(f"Fixed cost {doc_id} changed from cash to {new_payment_method.value}. Added {old_amount:.2f} back to cash.")
-            elif old_payment_method != PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+        NON_PROFIT_CATEGORIES = {
+            ExpenseCategory.NON_BUSINESS_RELATED,
+            ExpenseCategory.BANK_DEPOSIT
+        }
+
+        old_was_non_profit = old_category in NON_PROFIT_CATEGORIES
+        new_is_non_profit = new_category in NON_PROFIT_CATEGORIES
+
+        if old_was_non_profit == new_is_non_profit:
+            if new_payment_method == PaymentMethod.CASH and old_payment_method != PaymentMethod.CASH:
                 update_cash_on_hand_balance(db_session, -new_amount)
-                logger.info(f"Fixed cost {doc_id} changed from {old_payment_method.value} to cash. Subtracted {new_amount:.2f} from cash.")
-            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                logger.info(f"Fixed cost {doc_id} changed to cash payment. Subtracted {new_amount:.2f} from cash.")
+            elif new_payment_method != PaymentMethod.CASH and old_payment_method == PaymentMethod.CASH:
+                update_cash_on_hand_balance(db_session, old_amount)
+                logger.info(f"Fixed cost {doc_id} changed from cash payment. Added {old_amount:.2f} back to cash.")
+            elif new_payment_method == PaymentMethod.CASH and old_payment_method == PaymentMethod.CASH:
                 amount_difference = old_amount - new_amount
-                update_cash_on_hand_balance(db_session, amount_difference)
-                logger.info(f"Fixed cost {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Fixed cost {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Fixed cost {doc_id} (cash payment) amount unchanged. No cash adjustment needed.")
             else:
                 logger.info(f"Fixed cost {doc_id} payment method not cash, cash on hand not affected by update.")
-        elif old_cost.category == ExpenseCategory.NON_BUSINESS_RELATED and new_cost.category == ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
-                amount_difference = old_amount - new_amount
-                update_cash_on_hand_balance(db_session, amount_difference)
-                logger.info(f"Non-business fixed cost {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
-        elif old_cost.category == ExpenseCategory.NON_BUSINESS_RELATED and new_cost.category != ExpenseCategory.NON_BUSINESS_RELATED:
-            if new_payment_method == PaymentMethod.CASH:
-                update_cash_on_hand_balance(db_session, -new_amount)
-                logger.info(f"Fixed cost {doc_id} changed from non-business to business (cash payment). Subtracted {new_amount:.2f} from cash.")
-        elif old_cost.category != ExpenseCategory.NON_BUSINESS_RELATED and new_cost.category == ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH:
-                update_cash_on_hand_balance(db_session, old_amount)
-                logger.info(f"Fixed cost {doc_id} changed from business to non-business (old cash payment). Added {old_amount:.2f} back to cash.")
 
+        elif not old_was_non_profit and new_is_non_profit:
+            if old_payment_method == PaymentMethod.CASH and new_payment_method != PaymentMethod.CASH:
+                update_cash_on_hand_balance(db_session, old_amount)
+                logger.info(f"Fixed cost {doc_id} (cash payment) changed from business to non-profit, and from cash to non-cash. Added {old_amount:.2f} back to cash.")
+            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                amount_difference = old_amount - new_amount
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Fixed cost {doc_id} changed from business to non-profit, both cash. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Fixed cost {doc_id} changed from business to non-profit, cash payment, no amount change. No cash adjustment.")
+            else:
+                logger.info(f"Fixed cost {doc_id} changed from business to non-profit. No cash movement relevant to this transition.")
+
+        elif old_was_non_profit and not new_is_non_profit:
+            if old_payment_method != PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                update_cash_on_hand_balance(db_session, -new_amount)
+                logger.info(f"Fixed cost {doc_id} changed from non-profit to business, and from non-cash to cash. Subtracted {new_amount:.2f} from cash.")
+            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                amount_difference = old_amount - new_amount
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Fixed cost {doc_id} changed from non-profit to business, both cash. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Fixed cost {doc_id} changed from non-profit to business, cash payment, no amount change. No cash adjustment.")
+            else:
+                logger.info(f"Fixed cost {doc_id} changed from non-profit to business. No cash movement relevant to this transition.")
         return True
-    logger.warning(f"Fixed cost with ID {doc_id} not found for update.")
+    logger.warning(f"Fixed cost with ID {doc_id} not found for update (should not happen if updated_count is True).")
     return False
 
 def delete_fixed_cost(db_session: Session, doc_id: int) -> bool:
@@ -221,9 +254,13 @@ def add_daily_expense(db_session: Session, expense: DailyExpense) -> DailyExpens
     db_session.commit()
     db_session.refresh(db_expense)
     logger.info(f"Added daily expense: {expense.description} with ID {db_expense.id}")
-    if expense.payment_method == PaymentMethod.CASH:
+    NON_PROFIT_CATEGORIES = {ExpenseCategory.NON_BUSINESS_RELATED, ExpenseCategory.BANK_DEPOSIT}
+    if expense.payment_method == PaymentMethod.CASH and expense.category not in NON_PROFIT_CATEGORIES:
         update_cash_on_hand_balance(db_session, -expense.amount)
-        logger.info(f"Cash on hand decreased by {expense.amount:.2f} for daily expense (cash payment).")
+        logger.info(f"Cash on hand decreased by {expense.amount:.2f} for daily expense (cash payment, business related).")
+    elif expense.payment_method == PaymentMethod.CASH and expense.category in NON_PROFIT_CATEGORIES:
+        update_cash_on_hand_balance(db_session, -expense.amount)
+        logger.info(f"Cash on hand decreased by {expense.amount:.2f} for daily expense (cash payment, non-profit related).")
     return DailyExpense.model_validate(db_expense)
 
 def get_all_daily_expenses(db_session: Session) -> List[DailyExpense]:
@@ -247,6 +284,7 @@ def update_daily_expense(db_session: Session, doc_id: int, updates: Dict[str, An
 
     old_amount = old_expense.amount
     old_payment_method = old_expense.payment_method
+    old_category = old_expense.category
 
     if 'category' in updates and isinstance(updates['category'], str):
         updates['category'] = ExpenseCategory(updates['category'])
@@ -263,34 +301,60 @@ def update_daily_expense(db_session: Session, doc_id: int, updates: Dict[str, An
         new_expense = get_daily_expense_by_id(db_session, doc_id)
         new_amount = new_expense.amount
         new_payment_method = new_expense.payment_method
+        new_category = new_expense.category
 
-        # Adjust cash on hand based on category and payment method changes
-        if old_expense.category != ExpenseCategory.NON_BUSINESS_RELATED and new_expense.category != ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH and new_payment_method != PaymentMethod.CASH:
-                update_cash_on_hand_balance(db_session, old_amount)
-                logger.info(f"Daily expense {doc_id} changed from cash to {new_payment_method.value}. Added {old_amount:.2f} back to cash.")
-            elif old_payment_method != PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+        NON_PROFIT_CATEGORIES = {
+            ExpenseCategory.NON_BUSINESS_RELATED,
+            ExpenseCategory.BANK_DEPOSIT
+        }
+
+        old_was_non_profit = old_category in NON_PROFIT_CATEGORIES
+        new_is_non_profit = new_category in NON_PROFIT_CATEGORIES
+
+        if old_was_non_profit == new_is_non_profit:
+            if new_payment_method == PaymentMethod.CASH and old_payment_method != PaymentMethod.CASH:
                 update_cash_on_hand_balance(db_session, -new_amount)
-                logger.info(f"Daily expense {doc_id} changed from {old_payment_method.value} to cash. Subtracted {new_amount:.2f} from cash.")
-            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                logger.info(f"Daily expense {doc_id} changed to cash payment. Subtracted {new_amount:.2f} from cash.")
+            elif new_payment_method != PaymentMethod.CASH and old_payment_method == PaymentMethod.CASH:
+                update_cash_on_hand_balance(db_session, old_amount)
+                logger.info(f"Daily expense {doc_id} changed from cash payment. Added {old_amount:.2f} back to cash.")
+            elif new_payment_method == PaymentMethod.CASH and old_payment_method == PaymentMethod.CASH:
                 amount_difference = old_amount - new_amount
-                update_cash_on_hand_balance(db_session, amount_difference)
-                logger.info(f"Daily expense {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Daily expense {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Daily expense {doc_id} (cash payment) amount unchanged. No cash adjustment needed.")
             else:
                 logger.info(f"Daily expense {doc_id} payment method not cash, cash on hand not affected by update.")
-        elif old_expense.category == ExpenseCategory.NON_BUSINESS_RELATED and new_expense.category == ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
-                amount_difference = old_amount - new_amount
-                update_cash_on_hand_balance(db_session, amount_difference)
-                logger.info(f"Non-business daily expense {doc_id} (cash payment) amount changed. Adjusted cash by {amount_difference:.2f}.")
-        elif old_expense.category == ExpenseCategory.NON_BUSINESS_RELATED and new_expense.category != ExpenseCategory.NON_BUSINESS_RELATED:
-            if new_payment_method == PaymentMethod.CASH:
-                update_cash_on_hand_balance(db_session, -new_amount)
-                logger.info(f"Daily expense {doc_id} changed from non-business to business (cash payment). Subtracted {new_amount:.2f} from cash.")
-        elif old_expense.category != ExpenseCategory.NON_BUSINESS_RELATED and new_expense.category == ExpenseCategory.NON_BUSINESS_RELATED:
-            if old_payment_method == PaymentMethod.CASH:
+
+        elif not old_was_non_profit and new_is_non_profit:
+            if old_payment_method == PaymentMethod.CASH and new_payment_method != PaymentMethod.CASH:
                 update_cash_on_hand_balance(db_session, old_amount)
-                logger.info(f"Daily expense {doc_id} changed from business to non-business (old cash payment). Added {old_amount:.2f} back to cash.")
+                logger.info(f"Daily expense {doc_id} (cash payment) changed from business to non-profit, and from cash to non-cash. Added {old_amount:.2f} back to cash.")
+            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                amount_difference = old_amount - new_amount
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Daily expense {doc_id} changed from business to non-profit, both cash. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Daily expense {doc_id} changed from business to non-profit, cash payment, no amount change. No cash adjustment.")
+            else:
+                logger.info(f"Daily expense {doc_id} changed from business to non-profit. No cash movement relevant to this transition.")
+
+        elif old_was_non_profit and not new_is_non_profit:
+            if old_payment_method != PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                update_cash_on_hand_balance(db_session, -new_amount)
+                logger.info(f"Daily expense {doc_id} changed from non-profit to business, and from non-cash to cash. Subtracted {new_amount:.2f} from cash.")
+            elif old_payment_method == PaymentMethod.CASH and new_payment_method == PaymentMethod.CASH:
+                amount_difference = old_amount - new_amount
+                if amount_difference != 0:
+                    update_cash_on_hand_balance(db_session, amount_difference)
+                    logger.info(f"Daily expense {doc_id} changed from non-profit to business, both cash. Adjusted cash by {amount_difference:.2f}.")
+                else:
+                    logger.info(f"Daily expense {doc_id} changed from non-profit to business, cash payment, no amount change. No cash adjustment.")
+            else:
+                logger.info(f"Daily expense {doc_id} changed from non-profit to business. No cash movement relevant to this transition.")
         return True
     logger.warning(f"Daily expense with ID {doc_id} not found for update.")
     return False
@@ -434,14 +498,19 @@ def get_monthly_summary(db_session: Session, year: int, month: int) -> Dict[str,
         end_date_dt = datetime(year, month + 1, 1) - timedelta(days=1)
     end_date = end_date_dt.strftime("%Y-%m-%d")
 
+    excluded_categories_from_profit = {
+        ExpenseCategory.NON_BUSINESS_RELATED,
+        ExpenseCategory.BANK_DEPOSIT
+    }
+
     total_monthly_daily_expenses = db_session.query(func.sum(DBDailyExpense.amount)).filter(
         and_(DBDailyExpense.cost_date >= start_date, DBDailyExpense.cost_date <= end_date),
-        not_(DBDailyExpense.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBDailyExpense.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
 
     total_monthly_fixed_costs = db_session.query(func.sum(DBFixedCost.amount_eur)).filter(
         and_(DBFixedCost.cost_date >= start_date, DBFixedCost.cost_date <= end_date),
-        not_(DBFixedCost.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBFixedCost.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
 
     total_monthly_expenses = total_monthly_daily_expenses + total_monthly_fixed_costs
@@ -475,16 +544,21 @@ def get_expense_categories_summary(db_session: Session, year: int, month: int) -
 
     category_totals = defaultdict(float)
 
+    excluded_categories_from_summary = {
+        ExpenseCategory.NON_BUSINESS_RELATED,
+        ExpenseCategory.BANK_DEPOSIT
+    }
+
     daily_expenses = db_session.query(DBDailyExpense).filter(
         and_(DBDailyExpense.cost_date >= start_date, DBDailyExpense.cost_date <= end_date),
-        not_(DBDailyExpense.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBDailyExpense.category.in_(excluded_categories_from_summary))
     ).all()
     for expense in daily_expenses:
         category_totals[expense.category.value] += expense.amount
 
     fixed_costs = db_session.query(DBFixedCost).filter(
         and_(DBFixedCost.cost_date >= start_date, DBFixedCost.cost_date <= end_date),
-        not_(DBFixedCost.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBFixedCost.category.in_(excluded_categories_from_summary))
     ).all()
     for cost in fixed_costs:
         category_totals[cost.category.value] += cost.amount_eur
@@ -518,14 +592,19 @@ def get_yearly_summary(db_session: Session, year: int) -> Dict[str, float]:
     start_date = f"{year}-01-01"
     end_date = f"{year}-12-31"
 
+    excluded_categories_from_profit = {
+        ExpenseCategory.NON_BUSINESS_RELATED,
+        ExpenseCategory.BANK_DEPOSIT
+    }
+
     total_yearly_daily_expenses = db_session.query(func.sum(DBDailyExpense.amount)).filter(
         and_(DBDailyExpense.cost_date >= start_date, DBDailyExpense.cost_date <= end_date),
-        not_(DBDailyExpense.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBDailyExpense.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
 
     total_yearly_fixed_costs = db_session.query(func.sum(DBFixedCost.amount_eur)).filter(
         and_(DBFixedCost.cost_date >= start_date, DBFixedCost.cost_date <= end_date),
-        not_(DBFixedCost.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBFixedCost.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
 
     total_yearly_expenses = total_yearly_daily_expenses + total_yearly_fixed_costs
@@ -550,11 +629,16 @@ def get_yearly_summary(db_session: Session, year: int) -> Dict[str, float]:
     return summary
 
 def get_global_summary(db_session: Session) -> Dict[str, float]:
+    excluded_categories_from_profit = {
+        ExpenseCategory.NON_BUSINESS_RELATED,
+        ExpenseCategory.BANK_DEPOSIT
+    }
+
     total_global_daily_expenses = db_session.query(func.sum(DBDailyExpense.amount)).filter(
-        not_(DBDailyExpense.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBDailyExpense.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
     total_global_fixed_costs = db_session.query(func.sum(DBFixedCost.amount_eur)).filter(
-        not_(DBFixedCost.category == ExpenseCategory.NON_BUSINESS_RELATED)
+        not_(DBFixedCost.category.in_(excluded_categories_from_profit))
     ).scalar() or 0.0
     total_global_expenses = total_global_daily_expenses + total_global_fixed_costs
 
@@ -578,28 +662,3 @@ def create_all_tables(engine_param=None):
     target_engine = engine_param if engine_param else engine
     Base.metadata.create_all(bind=target_engine)
     logger.info("Database tables created successfully (if they didn't already exist).")
-
-# --- Functions for clearing all data (for development/testing) ---
-def clear_all_fixed_costs(db_session: Session):
-    """Deletes all fixed cost entries from the database."""
-    num_deleted = db_session.query(DBFixedCost).delete()
-    db_session.commit()
-    logger.info(f"Cleared {num_deleted} fixed cost entries.")
-
-def clear_all_daily_expenses(db_session: Session):
-    """Deletes all daily expense entries from the database."""
-    num_deleted = db_session.query(DBDailyExpense).delete()
-    db_session.commit()
-    logger.info(f"Cleared {num_deleted} daily expense entries.")
-
-def clear_all_income(db_session: Session):
-    """Deletes all income entries from the database."""
-    num_deleted = db_session.query(DBIncome).delete()
-    db_session.commit()
-    logger.info(f"Cleared {num_deleted} income entries.")
-
-def reset_cash_on_hand_balance(db_session: Session, initial_balance: float = 0.0):
-    """Resets the cash on hand balance to a specified initial value."""
-    # This function now re-uses set_initial_cash_on_hand to ensure a clean state
-    set_initial_cash_on_hand(db_session, initial_balance)
-    logger.info(f"Cash on hand balance reset to {initial_balance}.")

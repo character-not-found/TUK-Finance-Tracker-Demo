@@ -25,6 +25,7 @@ class ExpenseCategory(str, Enum):
     MARKETING = "Marketing"
     NON_BUSINESS_RELATED = "Non-Business Related"
     MEMBERSHIP_FEES = "Membership Fees"
+    BANK_DEPOSIT = "Bank Deposit"
 
 # Updated Enum for Payment Methods
 class PaymentMethod(str, Enum):

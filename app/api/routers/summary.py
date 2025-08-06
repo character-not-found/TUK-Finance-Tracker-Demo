@@ -58,6 +58,54 @@ async def get_income_sources_summary_api(
     logger.info(f"Successfully generated income sources summary for {year}-{month:02d}.")
     return summary
 
+@router.get("/weekly", summary="Get weekly expenses, income, and net profit/loss")
+async def get_weekly_summary_api(
+    start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
+    end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+) -> Dict[str, float]:
+    """
+    Retrieves a summary of total expenses, total income, and net profit/loss for a given week.
+    """
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    logger.info(f"Request for weekly summary for {start_date} to {end_date}.")
+    summary = database.get_weekly_summary(db, start_date_obj, end_date_obj)
+    logger.info(f"Successfully generated weekly summary for {start_date} to {end_date}.")
+    return summary
+
+@router.get("/weekly-expense-categories", summary="Get weekly expenses by category")
+async def get_weekly_expense_categories_summary_api(
+    start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
+    end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+) -> Dict[str, float]:
+    """
+    Retrieves a summary of expenses grouped by category for a given week.
+    """
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    logger.info(f"Request for weekly expense categories summary for {start_date} to {end_date}.")
+    summary = database.get_weekly_expense_categories_summary(db, start_date_obj, end_date_obj)
+    logger.info(f"Successfully generated weekly expense categories summary for {start_date} to {end_date}.")
+    return summary
+
+@router.get("/weekly-income-sources", summary="Get weekly income by source")
+async def get_weekly_income_sources_summary_api(
+    start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
+    end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+) -> Dict[str, float]:
+    """
+    Retrieves a summary of income by source for a given week.
+    """
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    logger.info(f"Request for weekly income sources summary for {start_date} to {end_date}.")
+    summary = database.get_weekly_income_sources_summary(db, start_date_obj, end_date_obj)
+    logger.info(f"Successfully generated weekly income sources summary for {start_date} to {end_date}.")
+    return summary
+
 @router.get("/yearly", summary="Get yearly expenses, income, and net profit/loss")
 async def get_yearly_summary_api(
     year: int = FastAPIQuery(default=datetime.now().year, description="Year for the summary"),
@@ -90,3 +138,18 @@ async def get_cash_on_hand_api(db: Session = Depends(get_db)):
     balance = database.get_cash_on_hand_balance(db)
     logger.info(f"Successfully retrieved cash on hand balance: {balance.balance:.2f}")
     return balance
+
+@router.get("/daily-income-average", summary="Get daily average income for a given date range (considering days with income)")
+async def get_daily_income_average_api(
+    start_date: datetime = FastAPIQuery(..., description="Start date for the period (YYYY-MM-DD)"),
+    end_date: datetime = FastAPIQuery(..., description="End date for the period (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+) -> Dict[str, float]:
+    """
+    Retrieves the daily average income for a specified date range,
+    only counting days where income was recorded.
+    """
+    logger.info(f"Request for daily income average from {start_date.date()} to {end_date.date()}.")
+    average_income = database.get_daily_income_average_for_period(db, start_date, end_date)
+    logger.info(f"Successfully generated daily income average: {average_income}.")
+    return {"daily_average_income": average_income}

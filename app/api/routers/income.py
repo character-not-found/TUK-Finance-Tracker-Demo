@@ -1,5 +1,6 @@
 # app/api/routers/income.py
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from datetime import datetime, date
 from typing import List
 import logging
 from sqlalchemy.orm import Session
@@ -42,6 +43,25 @@ async def get_all_individual_income(db: Session = Depends(get_db)) -> List[Incom
         processed_incomes.append(income_item)
     logger.info(f"Successfully retrieved and processed {len(processed_incomes)} individual income entries.")
     return processed_incomes
+
+    
+@router.get("/daily-summary", response_model=AggregatedIncome, summary="Retrieve aggregated income for a single day")
+async def get_single_day_income_summary_api(
+    date_param: str = Query(..., description="Date for the summary (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+) -> AggregatedIncome:
+    try:
+        parsed_date = datetime.strptime(date_param, "%Y-%m-%d").date()
+        target_datetime = datetime.combine(parsed_date, datetime.min.time())
+        daily_summary = database.get_single_day_income_summary(db, target_datetime)
+        logger.info(f"Successfully retrieved single day income summary for {date_param}: {daily_summary.total_daily_income_eur:.2f} EUR")
+        return daily_summary
+    except ValueError as ve:
+        logger.error(f"API: Date parsing error for '{date_param}': {ve}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid date format. Expected YYYY-MM-DD. Error: {ve}")
+    except Exception as e:
+        logger.error(f"API: Unhandled error in get_single_day_income_summary_api for date {date_param}: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error loading comparison data: HTTP error! status: 422 for today's income")
 
 @router.get("/{doc_id}", response_model=Income, summary="Retrieve a specific income entry by ID")
 async def get_income_by_id(doc_id: int, db: Session = Depends(get_db)) -> Income:

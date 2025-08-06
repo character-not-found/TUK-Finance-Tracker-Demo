@@ -1,12 +1,12 @@
 # app/database.py
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Enum as SQLEnum, func, and_, not_
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Enum as SQLEnum, func, and_, not_, distinct, cast, Date
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Optional, Dict, Any
 from collections import defaultdict
 import logging
-import calendar
 
 from .models import FixedCost, DailyExpense, Income, CostFrequency, ExpenseCategory, CashOnHand, PaymentMethod, AggregatedIncome
 from app.config import settings
@@ -67,6 +67,16 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+# Helper function to get the appropriate date column expression based on dialect
+def _get_date_column_expression(db_session: Session, column: Column) -> ColumnElement:
+    """
+    Returns the SQLAlchemy expression for a date column, handling dialect differences.
+    """
+    if db_session.bind.dialect.name == 'postgresql':
+        return cast(column, Date)
+    else: # Default to SQLite or other dialects where func.date() works
+        return func.date(column)
 
 def get_cash_on_hand_balance(db_session: Session) -> CashOnHand:
     balance_entry = db_session.query(DBCashOnHand).first()
@@ -489,7 +499,6 @@ def get_aggregated_income_by_date(db_session: Session) -> List[AggregatedIncome]
     logger.info(f"Retrieved {len(aggregated_incomes)} aggregated income entries.")
     return aggregated_incomes
 
-
 def get_monthly_summary(db_session: Session, year: int, month: int) -> Dict[str, float]:
     start_date = f"{year}-{month:02d}-01"
     if month == 12:
@@ -588,6 +597,139 @@ def get_income_sources_summary(db_session: Session, year: int, month: int) -> Di
     logger.info(f"Generated income sources summary for {year}-{month:02d}: {summary}")
     return summary
 
+def get_weekly_summary(db_session: Session, start_date: datetime, end_date: datetime) -> Dict[str, float]:
+    """
+    Retrieves a summary of total expenses, total income, and net profit/loss for a given week.
+    """
+    excluded_categories_from_profit = {
+        ExpenseCategory.NON_BUSINESS_RELATED,
+        ExpenseCategory.BANK_DEPOSIT
+    }
+
+    total_daily_expenses_for_week = db_session.query(func.sum(DBDailyExpense.amount)).filter(
+        and_(
+            DBDailyExpense.cost_date >= start_date.strftime('%Y-%m-%d'),
+            DBDailyExpense.cost_date <= end_date.strftime('%Y-%m-%d'),
+            not_(DBDailyExpense.category.in_(excluded_categories_from_profit))
+        )
+    ).scalar() or 0.0
+
+    total_fixed_costs_for_week = db_session.query(func.sum(DBFixedCost.amount_eur)).filter(
+        and_(
+            DBFixedCost.cost_date >= start_date.strftime('%Y-%m-%d'),
+            DBFixedCost.cost_date <= end_date.strftime('%Y-%m-%d'),
+            not_(DBFixedCost.category.in_(excluded_categories_from_profit))
+        )
+    ).scalar() or 0.0
+    
+    total_expenses = total_daily_expenses_for_week + total_fixed_costs_for_week
+
+    income_results = db_session.query(
+        func.sum(DBIncome.tours_revenue_eur),
+        func.sum(DBIncome.transfers_revenue_eur)
+    ).filter(
+        and_(
+            DBIncome.income_date >= start_date.strftime('%Y-%m-%d'),
+            DBIncome.income_date <= end_date.strftime('%Y-%m-%d')
+        )
+    ).first()
+
+    total_income = (income_results[0] or 0.0) + (income_results[1] or 0.0)
+    net_profit = total_income - total_expenses
+
+    summary = {
+        "total_weekly_expenses": round(total_expenses, 2),
+        "total_weekly_income": round(total_income, 2),
+        "net_weekly_profit": round(net_profit, 2),
+    }
+    logger.info(f"Generated weekly summary for {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}: {summary}")
+    return summary
+
+def get_weekly_expense_categories_summary(db_session: Session, start_date: datetime, end_date: datetime) -> Dict[str, float]:
+    """
+    Retrieves a summary of expenses grouped by category for a given week.
+    """
+    daily_expenses_by_category = db_session.query(
+        DBDailyExpense.category,
+        func.sum(DBDailyExpense.amount)
+    ).filter(
+        and_(
+            DBDailyExpense.cost_date >= start_date.strftime('%Y-%m-%d'),
+            DBDailyExpense.cost_date <= end_date.strftime('%Y-%m-%d')
+        )
+    ).group_by(DBDailyExpense.category).all()
+
+    fixed_costs_by_category = db_session.query(
+        DBFixedCost.category,
+        func.sum(DBFixedCost.amount_eur)
+    ).filter(
+        and_(
+            DBFixedCost.cost_date >= start_date.strftime('%Y-%m-%d'),
+            DBFixedCost.cost_date <= end_date.strftime('%Y-%m-%d')
+        )
+    ).group_by(DBFixedCost.category).all()
+
+    expense_summary = defaultdict(float)
+    for category, amount in daily_expenses_by_category:
+        expense_summary[category.value] += amount
+    for category, amount in fixed_costs_by_category:
+        expense_summary[category.value] += amount
+
+    return {category: round(amount, 2) for category, amount in expense_summary.items()}
+
+def get_weekly_income_sources_summary(db_session: Session, start_date: datetime, end_date: datetime) -> Dict[str, float]:
+    """
+    Retrieves a summary of income by source for a given week.
+    """
+    income_summary = db_session.query(
+        func.sum(DBIncome.tours_revenue_eur).label('tours_revenue_eur'),
+        func.sum(DBIncome.transfers_revenue_eur).label('transfers_revenue_eur')
+    ).filter(
+        and_(
+            DBIncome.income_date >= start_date.strftime('%Y-%m-%d'),
+            DBIncome.income_date <= end_date.strftime('%Y-%m-%d')
+        )
+    ).first()
+
+    summary = {
+        "Tours": round(income_summary.tours_revenue_eur, 2) if income_summary.tours_revenue_eur else 0.0,
+        "Transfers": round(income_summary.transfers_revenue_eur, 2) if income_summary.transfers_revenue_eur else 0.0,
+    }
+    return summary
+
+def get_daily_income_average_for_period(db_session: Session, start_date: datetime, end_date: datetime) -> float:
+    """
+    Calculates the daily average income over a specified period,
+    considering only days that had recorded income.
+    """
+    # Apply the helper function to DBIncome.income_date
+    income_date_col = _get_date_column_expression(db_session, DBIncome.income_date)
+
+    total_income_tours = db_session.query(func.sum(DBIncome.tours_revenue_eur)).filter(
+        income_date_col >= start_date, # Use the casted/converted column
+        income_date_col <= end_date    # Use the casted/converted column
+    ).scalar() or 0.0
+
+    total_income_transfers = db_session.query(func.sum(DBIncome.transfers_revenue_eur)).filter(
+        income_date_col >= start_date, # Use the casted/converted column
+        income_date_col <= end_date    # Use the casted/converted column
+    ).scalar() or 0.0
+
+    total_income = total_income_tours + total_income_transfers
+
+    num_days_with_income = db_session.query(func.count(distinct(income_date_col))).filter( # Apply distinct on the casted/converted column
+        income_date_col >= start_date,
+        income_date_col <= end_date
+    ).scalar() or 0
+
+    if num_days_with_income > 0:
+        daily_average_income = total_income / num_days_with_income
+    else:
+        daily_average_income = 0.0
+
+    logger.info(f"Calculated daily income average for period {start_date} to {end_date}: {daily_average_income:.2f} over {num_days_with_income} days with income.")
+    return round(daily_average_income, 2)
+
 def get_yearly_summary(db_session: Session, year: int) -> Dict[str, float]:
     start_date = f"{year}-01-01"
     end_date = f"{year}-12-31"
@@ -662,3 +804,44 @@ def create_all_tables(engine_param=None):
     target_engine = engine_param if engine_param else engine
     Base.metadata.create_all(bind=target_engine)
     logger.info("Database tables created successfully (if they didn't already exist).")
+
+def get_single_day_income_summary(db_session: Session, target_date: datetime) -> AggregatedIncome:
+    logger.info(f"DB: Attempting to retrieve single day income summary for {target_date.date()}")
+
+    # Use the helper function to get the appropriate date column expression
+    income_date_col = _get_date_column_expression(db_session, DBIncome.income_date)
+
+    income_summary_query = db_session.query(
+        func.sum(DBIncome.tours_revenue_eur).label('total_tours_revenue_eur'),
+        func.sum(DBIncome.transfers_revenue_eur).label('total_transfers_revenue_eur'),
+        func.sum(DBIncome.hours_worked).label('total_hours_worked')
+    ).filter(
+        income_date_col == target_date.date() # Compare with a date object
+    ).first()
+
+    # Handle case where no income entries exist for the day
+    if income_summary_query is None or (income_summary_query.total_tours_revenue_eur is None and income_summary_query.total_transfers_revenue_eur is None):
+        logger.info(f"DB: No income entries found for {target_date.date()}. Returning zero summary.")
+        return AggregatedIncome(
+            income_date=target_date.strftime("%Y-%m-%d"),
+            total_tours_revenue_eur=0.0,
+            total_transfers_revenue_eur=0.0,
+            total_daily_income_eur=0.0,
+            total_hours_worked=0.0
+        )
+
+    # Extract summed values, defaulting to 0.0 if None
+    total_tours_revenue = income_summary_query.total_tours_revenue_eur or 0.0
+    total_transfers_revenue = income_summary_query.total_transfers_revenue_eur or 0.0
+    total_hours_worked = income_summary_query.total_hours_worked or 0.0
+    total_daily_income = total_tours_revenue + total_transfers_revenue
+
+    summary = AggregatedIncome(
+        income_date=target_date.strftime("%Y-%m-%d"),
+        total_tours_revenue_eur=round(total_tours_revenue, 2),
+        total_transfers_revenue_eur=round(total_transfers_revenue, 2),
+        total_daily_income_eur=round(total_daily_income, 2),
+        total_hours_worked=round(total_hours_worked, 2)
+    )
+    logger.info(f"DB: Generated single day income summary for {target_date.date()}: {summary.total_daily_income_eur:.2f} EUR")
+    return summary

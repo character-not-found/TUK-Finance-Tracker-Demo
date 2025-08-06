@@ -12,9 +12,21 @@
 <div class="container mx-auto px-4 py-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Business Overview</h2>
 
+    <div class="flex justify-center space-x-4 mb-8">
+        <button id="currentMonthBtn" class="btn-date-range">Current Month</button>
+        <button id="lastMonthBtn" class="btn-date-range">Last Month</button>
+        <button id="lastWeekBtn" class="btn-date-range">Last Week</button>
+        <button id="thisDayLastWeekBtn" class="btn-date-range">This Day Last Week</button>
+        <button id="thisDayLastMonthBtn" class="btn-date-range">This Day Last Month</button>
+    </div>
+
+    <div id="incomeComparisonMessage" class="bg-blue-100 border border-blue-500 text-blue-700 px-4 py-3 rounded-xl shadow-xl z-50 transition-opacity duration-500 ease-in-out hidden mb-2" role="alert">
+        <p id="comparisonMessageText"></p>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Expenses</h3>
+            <h3 id="expensesChartTitle" class="text-xl font-semibold text-gray-700 mb-4">Monthly Expenses</h3>
             <div class="chart-container">
                 <canvas id="monthlyExpenseCategoriesPieChart"></canvas>
                 <p id="noMonthlyExpenseCategoriesPieChart" class="text-gray-500 text-center py-2 hidden">No monthly expense categories data.</p>
@@ -23,7 +35,7 @@
         </div>
 
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Income</h3>
+            <h3 id="incomeChartTitle" class="text-xl font-semibold text-gray-700 mb-4">Monthly Income</h3>
             <div class="chart-container">
                 <canvas id="monthlyIncomeChart"></canvas>
             </div>
@@ -33,11 +45,11 @@
 
         <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center gap-y-4 min-h-[250px]">
             <div>
-                <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Net Profit/Loss</h3>
+                <h3 class="text-xl font-semibold text-gray-700 text-center">Net Profit/Loss</h3>
                 <div id="netProfitLossDisplay" class="profit-loss-display"></div>
             </div>
             <div>
-                <h3 class="text-xl font-semibold text-gray-700 text-center">Monthly Average</h3>
+                <h3 id="monthlyAverageProfitLossTitle" class="text-xl font-semibold text-gray-700 text-center">Monthly Average</h3>
                 <div id="monthlyAverageValueDisplay" class="monthly-average-display"></div>
             </div>
             <div>
@@ -74,7 +86,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    </tbody>
+                        </tbody>
                 </table>
                 <p id="noIncome" class="text-gray-500 text-center py-4 hidden">No income recorded.</p>
             </div>
@@ -95,7 +107,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    </tbody>
+                        </tbody>
                 </table>
                 <p id="noDailyExpenses" class="text-gray-500 text-center py-4 hidden">No daily expenses recorded.</p>
             </div>
@@ -118,7 +130,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    </tbody>
+                        </tbody>
                 </table>
                 <p id="noFixedCosts" class="text-gray-500 text-center py-4 hidden">No fixed costs recorded.</p>
             </div>

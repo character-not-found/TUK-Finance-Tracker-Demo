@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
 from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routers import fixed_costs, daily_expenses, income, summary
 from app.database import get_db, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
@@ -32,6 +33,21 @@ app = FastAPI(
 )
 
 app.add_middleware(ForceHTTPSMiddleware)
+
+origins = [
+    "http://localhost",
+    "http://localhost:8100",
+    "http://192.168.15.63:8100",
+    "http://192.168.17.13:8100"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 templates = Jinja2Templates(directory="templates")
 

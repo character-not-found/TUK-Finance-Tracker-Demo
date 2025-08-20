@@ -1,6 +1,6 @@
 # app/api/routes.py
 from fastapi import FastAPI, Request, HTTPException, status, Depends, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import logging
@@ -15,6 +15,7 @@ from app.api.routers import fixed_costs, daily_expenses, income, summary
 from app.database import get_db, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
 from app.config import settings
 from app.database import SessionLocal
+from app.api.auth_utils import create_access_token, verify_password, get_password_hash, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,13 @@ app.include_router(daily_expenses.router)
 app.include_router(income.router)
 app.include_router(summary.router)
 
+PROTECTED_HTML_PATHS = [
+    "/",
+    "/register-expenses",
+    "/register-income",
+    "/data-management"
+]
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application startup event triggered.")
@@ -75,50 +83,36 @@ async def startup_event():
     finally:
         db_session.close()
 
-async def get_current_user_token(request: Request):
-    access_token = request.cookies.get("access_token")
-    if not access_token:
-        logger.warning("Attempted access to protected route without access token.")
-        raise HTTPException(
-            status_code=status.HTTP_302_FOUND,
-            detail="Not authenticated",
-            headers={"Location": "/login"}
-        )
-    # In a real app, you would validate this token (e.g., JWT verification)
-    # For this demo, we just check its presence.
-    if access_token != "demo_access_token_for_employer":
-        logger.warning(f"Invalid access token: {access_token}")
-        raise HTTPException(
-            status_code=status.HTTP_302_FOUND,
-            detail="Invalid authentication token",
-            headers={"Location": "/login"}
-        )
-    return access_token
-
-
 # --- HTML Endpoints ---
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED and request.url.path in PROTECTED_HTML_PATHS:
+        logger.warning("Unauthorized access to root path, redirecting to login.")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    return exc
+
 @app.get("/login", response_class=HTMLResponse, summary="Serve the login page")
 async def login_page(request: Request):
     logger.info("Serving login.html")
     return templates.TemplateResponse("login.html", {"request": request, "datetime": datetime})
 
 @app.get("/", response_class=HTMLResponse, summary="Serve the main dashboard HTML page")
-async def read_root(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
+async def read_root(request: Request, db: Session = Depends(get_db), user = Depends(get_current_user)):
     logger.info("Serving dashboard_content.html")
     return templates.TemplateResponse("dashboard_content.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-expenses", response_class=HTMLResponse, summary="Serve the expense registration page")
-async def register_expenses_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
+async def register_expenses_page(request: Request, db: Session = Depends(get_db), user = Depends(get_current_user)):
     logger.info("Serving register_expenses.html")
     return templates.TemplateResponse("register_expenses.html", {"request": request, "datetime": datetime})
 
 @app.get("/register-income", response_class=HTMLResponse, summary="Serve the income registration page")
-async def register_income_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
+async def register_income_page(request: Request, db: Session = Depends(get_db), user = Depends(get_current_user)):
     logger.info("Serving register_income.html")
     return templates.TemplateResponse("register_income.html", {"request": request, "datetime": datetime})
 
 @app.get("/data-management", response_class=HTMLResponse, summary="Serve the data management page")
-async def data_management_page(request: Request, db: Session = Depends(get_db), token: str = Depends(get_current_user_token)):
+async def data_management_page(request: Request, db: Session = Depends(get_db), user = Depends(get_current_user)):
     logger.info("Serving data_management.html")
     return templates.TemplateResponse("data_management.html", {"request": request, "datetime": datetime})
 
@@ -129,37 +123,35 @@ async def health_check():
 
 # --- Authentication Endpoint ---
 @app.post("/login/token")
-async def login_for_access_token(
-    response: Response, form_data: OAuth2PasswordRequestForm = Depends()
-):  
-    if settings.APP_ENV == "demo":
-        if (
-            form_data.username == settings.DEMO_USERNAME
-            and form_data.password == settings.DEMO_PASSWORD
-        ):
-            access_token = "demo_access_token_for_employer"
-            expires_at = datetime.now() + timedelta(hours=1)
-            response.set_cookie(
-                key="access_token",
-                value=access_token,
-                expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
-                httponly=True,
-                samesite="lax",
-                secure=False,
-                path="/"
-            )
-            return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password for demo",
-            headers={"WWW-Authenticate": "Bearer"},
+async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
+    hashed_password_from_db = get_password_hash(settings.DEMO_PASSWORD)
+    
+    if (
+        form_data.username == settings.DEMO_USERNAME
+        and verify_password(form_data.password, hashed_password_from_db)
+    ):
+        access_token = create_access_token(
+            data={"sub": form_data.username}
         )
-    else:
-        logger.warning(f"Attempted login for user '{form_data.username}' in {settings.APP_ENV} environment.")
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Production authentication logic not yet implemented. Please replace this placeholder.",
+        
+        expires_at = datetime.now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
+            httponly=True,
+            samesite="lax",
+            secure=False,
+            path="/"
         )
+        return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
+    
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 @app.post("/logout")
 async def logout(response: Response):

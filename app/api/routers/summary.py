@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app import database
 from app.database import get_db
 from app.models import CashOnHand
+from app.api.auth_utils import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,8 @@ router = APIRouter(
 async def get_monthly_summary_api(
     year: int = FastAPIQuery(default=datetime.now().year, description="Year for the summary"),
     month: int = FastAPIQuery(default=datetime.now().month, description="Month for the summary (1-12)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of total expenses, total income, and net profit/loss for a given month.
@@ -34,7 +36,8 @@ async def get_monthly_summary_api(
 async def get_expense_categories_summary_api(
     year: int = FastAPIQuery(default=datetime.now().year, description="Year for the summary"),
     month: int = FastAPIQuery(default=datetime.now().month, description="Month for the summary (1-12)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of expenses grouped by category for a given month.
@@ -48,7 +51,8 @@ async def get_expense_categories_summary_api(
 async def get_income_sources_summary_api(
     year: int = FastAPIQuery(default=datetime.now().year, description="Year for the summary"),
     month: int = FastAPIQuery(default=datetime.now().month, description="Month for the summary (1-12)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of income grouped by source (Tours, Transfers) for a given month.
@@ -62,7 +66,8 @@ async def get_income_sources_summary_api(
 async def get_weekly_summary_api(
     start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
     end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of total expenses, total income, and net profit/loss for a given week.
@@ -78,7 +83,8 @@ async def get_weekly_summary_api(
 async def get_weekly_expense_categories_summary_api(
     start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
     end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of expenses grouped by category for a given week.
@@ -94,7 +100,8 @@ async def get_weekly_expense_categories_summary_api(
 async def get_weekly_income_sources_summary_api(
     start_date: str = FastAPIQuery(description="Start date for the summary (YYYY-MM-DD)"),
     end_date: str = FastAPIQuery(description="End date for the summary (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of income by source for a given week.
@@ -109,7 +116,8 @@ async def get_weekly_income_sources_summary_api(
 @router.get("/yearly", summary="Get yearly expenses, income, and net profit/loss")
 async def get_yearly_summary_api(
     year: int = FastAPIQuery(default=datetime.now().year, description="Year for the summary"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves a summary of total expenses, total income, and net profit/loss for a given year.
@@ -120,7 +128,7 @@ async def get_yearly_summary_api(
     return summary
 
 @router.get("/global", summary="Get global expenses, income, and net profit/loss")
-async def get_global_summary_api(db: Session = Depends(get_db)) -> Dict[str, float]:
+async def get_global_summary_api(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> Dict[str, float]:
     """
     Retrieves a summary of total expenses, total income, and net profit/loss across all records.
     """
@@ -130,7 +138,7 @@ async def get_global_summary_api(db: Session = Depends(get_db)) -> Dict[str, flo
     return summary
 
 @router.get("/cash-on-hand", response_model=CashOnHand, summary="Get current cash on hand balance")
-async def get_cash_on_hand_api(db: Session = Depends(get_db)):
+async def get_cash_on_hand_api(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Retrieves the current cash on hand balance.
     """
@@ -143,7 +151,8 @@ async def get_cash_on_hand_api(db: Session = Depends(get_db)):
 async def get_daily_income_average_api(
     start_date: datetime = FastAPIQuery(..., description="Start date for the period (YYYY-MM-DD)"),
     end_date: datetime = FastAPIQuery(..., description="End date for the period (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, float]:
     """
     Retrieves the daily average income for a specified date range,

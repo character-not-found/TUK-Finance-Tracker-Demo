@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app import database
 from app.database import get_db
 from app.models import Income, AggregatedIncome
+from app.api.auth_utils import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[AggregatedIncome], summary="Retrieve all aggregated income entries by date")
-async def get_aggregated_income(db: Session = Depends(get_db)) -> List[AggregatedIncome]:
+async def get_aggregated_income(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[AggregatedIncome]:
     """
     Retrieves a list of all income entries from the database, aggregated by date.
     """
@@ -28,7 +29,7 @@ async def get_aggregated_income(db: Session = Depends(get_db)) -> List[Aggregate
     return aggregated_incomes
 
 @router.get("/all-individual", response_model=List[Income], summary="Retrieve all individual income entries")
-async def get_all_individual_income(db: Session = Depends(get_db)) -> List[Income]:
+async def get_all_individual_income(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[Income]:
     """
     Retrieves a list of all individual income entries from the database.
     This endpoint is for internal use where non-aggregated data is needed (e.g., calculations).
@@ -48,7 +49,8 @@ async def get_all_individual_income(db: Session = Depends(get_db)) -> List[Incom
 @router.get("/daily-summary", response_model=AggregatedIncome, summary="Retrieve aggregated income for a single day")
 async def get_single_day_income_summary_api(
     date_param: str = Query(..., description="Date for the summary (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
 ) -> AggregatedIncome:
     try:
         parsed_date = datetime.strptime(date_param, "%Y-%m-%d").date()
@@ -64,7 +66,7 @@ async def get_single_day_income_summary_api(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error loading comparison data: HTTP error! status: 422 for today's income")
 
 @router.get("/{doc_id}", response_model=Income, summary="Retrieve a specific income entry by ID")
-async def get_income_by_id(doc_id: int, db: Session = Depends(get_db)) -> Income:
+async def get_income_by_id(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> Income:
     """
     Retrieves a single income entry by its document ID and calculates
     the daily_total_eur for it.
@@ -86,7 +88,7 @@ async def get_income_by_id(doc_id: int, db: Session = Depends(get_db)) -> Income
     return inc
 
 @router.post("/", response_model=Income, status_code=status.HTTP_201_CREATED, summary="Create a new income entry")
-async def create_income_api(income: Income, db: Session = Depends(get_db)) -> Income:
+async def create_income_api(income: Income, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> Income:
     """
     Creates a new income entry in the database.
     """
@@ -107,7 +109,7 @@ async def create_income_api(income: Income, db: Session = Depends(get_db)) -> In
 
 
 @router.put("/{doc_id}", response_model=Income, summary="Update an existing income entry")
-async def update_income_api(doc_id: int, income: Income, db: Session = Depends(get_db)) -> Income:
+async def update_income_api(doc_id: int, income: Income, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)) -> Income:
     """
     Updates an existing income entry identified by its document ID.
     Raises a 404 error if the income is not found.
@@ -136,7 +138,7 @@ async def update_income_api(doc_id: int, income: Income, db: Session = Depends(g
     return updated_income
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an income entry by ID")
-async def delete_income_api(doc_id: int, db: Session = Depends(get_db)):
+async def delete_income_api(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Deletes an income entry by its document ID.
     """

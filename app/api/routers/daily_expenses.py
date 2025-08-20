@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import database
 from app.database import get_db
 from app.models import DailyExpense, PaymentMethod
+from app.api.auth_utils import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[DailyExpense], summary="Retrieve all daily expenses")
-async def get_daily_expenses(db: Session = Depends(get_db)):
+async def get_daily_expenses(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Retrieves a list of all daily expense entries from the database.
     """
@@ -27,7 +28,7 @@ async def get_daily_expenses(db: Session = Depends(get_db)):
     return expenses
 
 @router.get("/{doc_id}", response_model=DailyExpense, summary="Retrieve a specific daily expense by ID")
-async def get_daily_expense_by_id(doc_id: int, db: Session = Depends(get_db)):
+async def get_daily_expense_by_id(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Retrieves a single daily expense entry by its document ID.
     Raises a 404 error if the expense is not found.
@@ -41,7 +42,7 @@ async def get_daily_expense_by_id(doc_id: int, db: Session = Depends(get_db)):
     return expense
 
 @router.post("/", response_model=DailyExpense, status_code=status.HTTP_201_CREATED, summary="Create a new daily expense")
-async def create_daily_expense(daily_expense: DailyExpense, db: Session = Depends(get_db)):
+async def create_daily_expense(daily_expense: DailyExpense, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Adds a new daily expense entry to the database.
     """
@@ -55,7 +56,7 @@ async def create_daily_expense(daily_expense: DailyExpense, db: Session = Depend
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error adding daily expense: {e}")
 
 @router.put("/{doc_id}", response_model=DailyExpense, summary="Update an existing daily expense by ID")
-async def update_daily_expense_api(doc_id: int, updates: Dict[str, Any], db: Session = Depends(get_db)):
+async def update_daily_expense_api(doc_id: int, updates: Dict[str, Any], db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Updates an existing daily expense entry by its document ID.
     """
@@ -81,7 +82,7 @@ async def update_daily_expense_api(doc_id: int, updates: Dict[str, Any], db: Ses
     return updated_expense
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a daily expense by ID")
-async def delete_daily_expense_api(doc_id: int, db: Session = Depends(get_db)):
+async def delete_daily_expense_api(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Deletes a daily expense entry by its document ID.
     """

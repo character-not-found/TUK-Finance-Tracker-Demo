@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import database
 from app.database import get_db
 from app.models import FixedCost, PaymentMethod
+from app.api.auth_utils import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[FixedCost], summary="Retrieve all fixed costs")
-async def get_fixed_costs(db: Session = Depends(get_db)):
+async def get_fixed_costs(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Retrieves a list of all fixed cost entries from the database.
     """
@@ -27,7 +28,7 @@ async def get_fixed_costs(db: Session = Depends(get_db)):
     return costs
 
 @router.get("/{doc_id}", response_model=FixedCost, summary="Retrieve a specific fixed cost by ID")
-async def get_fixed_cost_by_id(doc_id: int, db: Session = Depends(get_db)):
+async def get_fixed_cost_by_id(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Retrieves a single fixed cost entry by its document ID.
     Raises a 404 error if the cost is not found.
@@ -41,7 +42,7 @@ async def get_fixed_cost_by_id(doc_id: int, db: Session = Depends(get_db)):
     return cost
 
 @router.post("/", response_model=FixedCost, status_code=status.HTTP_201_CREATED, summary="Create a new fixed cost")
-async def create_fixed_cost(fixed_cost: FixedCost, db: Session = Depends(get_db)):
+async def create_fixed_cost(fixed_cost: FixedCost, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Adds a new fixed cost entry to the database.
     """
@@ -55,7 +56,7 @@ async def create_fixed_cost(fixed_cost: FixedCost, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error adding fixed cost: {e}")
 
 @router.put("/{doc_id}", response_model=FixedCost, summary="Update an existing fixed cost by ID")
-async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Session = Depends(get_db)):
+async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Updates an existing fixed cost entry by its document ID.
     """
@@ -81,7 +82,7 @@ async def update_fixed_cost_api(doc_id: int, updates: Dict[str, Any], db: Sessio
     return updated_cost
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a fixed cost by ID")
-async def delete_fixed_cost_api(doc_id: int, db: Session = Depends(get_db)):
+async def delete_fixed_cost_api(doc_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Deletes a fixed cost entry by its document ID.
     """

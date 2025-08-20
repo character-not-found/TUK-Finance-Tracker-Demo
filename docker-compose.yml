@@ -1,68 +1,50 @@
-# docker-compose.yml
 services:
-  # Your FastAPI application service (renamed from web-demo to app)
   web-demo:
     build:
-      context: . # Build context is the current directory (where Dockerfile is)
-      dockerfile: Dockerfile # Path to the Dockerfile   
-    # IMPORTANT: Remove the 'ports' mapping here. Caddy will handle external exposure.
-    # Instead, 'expose' the internal port for Caddy to access.
+      context: .
+      dockerfile: Dockerfile
     expose:
-      - "12000" # Expose the internal port your app listens on (as defined in Dockerfile CMD)
+      - "12000"
     volumes:
-      # Mount the current directory into the container's /app directory
-      # This allows for live code changes during development (if --reload is used)
-      # and ensures the app's files are present.
       - .:/app
-      # Mount a volume for logs persistence
       - ./logs:/logs
     env_file:
        - ./.env.production
-    # Restart policy to restart the container if it exits
     restart: unless-stopped
     depends_on:
-      - db # Ensure 'db' service starts before 'app'
+      - db
     networks:
-      - demo_network # Use a custom network for services to communicate
+      - demo_network
 
-  # PostgreSQL database service
   db:
-    image: postgres:16-alpine # Use a specific, stable, lightweight version of PostgreSQL
+    image: postgres:16-alpine
     env_file:
       - ./.env.production
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Persistent data volume for PostgreSQL
-    # Optional: Expose to host if you need to connect from outside container (e.g., for psql client)
-    # For production, consider removing this port mapping if not strictly needed for external access.
-    # - "5432:5432"
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - demo_network # Connect to the same network as 'app' and 'caddy'
+      - demo_network
 
-  # New Caddy Reverse Proxy service
   caddy:
-    image: caddy:latest # Use the official Caddy Docker image
-    restart: unless-stopped # Automatically restart Caddy if it crashes   
-    # Map host ports 80 and 443 to Caddy's container ports.
-    # Caddy will listen on these ports for incoming HTTP and HTTPS requests.
+    image: caddy:latest
+    restart: unless-stopped
     ports:
-      - "80:80"   # HTTP port (for redirects and Let's Encrypt challenges)
-      - "443:443" # HTTPS port (for secure traffic)
-    # Mount your Caddyfile into the container's default config location
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro # Mount your custom Caddyfile (read-only)
-      - caddy_data:/data                    # Volume for Caddy to store SSL certificates and other data
-      - caddy_config:/config                # Volume for Caddy's configuration (internal state)
-    # Ensures the 'app' service starts before Caddy tries to proxy to it.
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - web-demo 
     networks:
-      - demo_network # Connect Caddy to the same network as the 'app'
+      - demo_network
 
 volumes:
-  postgres_data: # Define the named volume for persistent PostgreSQL data
-  caddy_data:    # Define the named volume for Caddy's persistent data (certs, etc.)
-  caddy_config:  # Define the named volume for Caddy's configuration
+  postgres_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   demo_network:
-    driver: bridge # Define a custom network for services to communicate securely
+    driver: bridge

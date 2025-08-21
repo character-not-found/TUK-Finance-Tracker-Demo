@@ -36,10 +36,7 @@ app = FastAPI(
 app.add_middleware(ForceHTTPSMiddleware)
 
 origins = [
-    "http://localhost",
-    "http://localhost:8100",
-    "http://192.168.15.63:8100",
-    "http://192.168.17.13:8100"
+    "https://demotuk.duckdns.org",
 ]
 
 app.add_middleware(

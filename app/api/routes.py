@@ -15,7 +15,7 @@ from app.api.routers import fixed_costs, daily_expenses, income, summary
 from app.database import get_db, create_all_tables, get_cash_on_hand_balance, set_initial_cash_on_hand
 from app.config import settings
 from app.database import SessionLocal
-from app.api.auth_utils import create_access_token, verify_password, get_password_hash, get_current_user
+from app.api.auth_utils import create_access_token, verify_password, get_password_hash, get_current_user, get_current_user_optional
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,15 @@ async def data_management_page(request: Request, db: Session = Depends(get_db), 
 async def health_check():
     logger.info("Health check endpoint accessed.")
     return {"status": "ok"}
+
+@app.get("/session_check", summary="Existing session check endpoint")
+async def session_check_endpoint(user = Depends(get_current_user_optional)):
+    if user:
+        logger.info("Session check successful. User authenticated.")
+        return {"status": "ok", "authenticated": True}
+    else:
+        logger.warning("Session check failed. No authenticated user.")
+        return {"status": "ok", "authenticated": False}
 
 # --- Authentication Endpoint ---
 @app.post("/login/token")

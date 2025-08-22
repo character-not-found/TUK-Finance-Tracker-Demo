@@ -58,3 +58,28 @@ async def get_current_user(request: Request):
     except JWTError as e:
         logger.warning(f"JWT decoding failed: {e}")
         raise credentials_exception
+    
+async def get_current_user_optional(request: Request):
+    token_to_check = None
+    auth_header = request.headers.get("Authorization")
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token_to_check = auth_header.split(" ")[1]
+
+    if not token_to_check:
+        token_to_check = request.cookies.get("access_token")
+
+    if not token_to_check:
+        logger.info("Optional token check: No token found. Returning None.")
+        return None
+
+    try:
+        payload = jwt.decode(token_to_check, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            logger.warning("Optional token check: Invalid token payload. Returning None.")
+            return None
+        return username
+    except JWTError:
+        logger.warning("Optional token check: JWT decoding failed. Returning None.")
+        return None

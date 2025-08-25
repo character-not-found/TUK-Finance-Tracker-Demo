@@ -1,7 +1,5 @@
 FROM python:3.12-slim-bookworm
 
-RUN addgroup --system demotuk && adduser --system --group demotuk
-
 # Set the working directory in the container
 WORKDIR /app
 
@@ -12,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     # Clean up apt caches to reduce image size
     && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user and group
+RUN groupadd -r demotuk && useradd -r -g demotuk demotuk
 
 # Install Rust toolchain using rustup
 # This command downloads and installs Rust, including cargo
@@ -31,7 +32,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create the logs directory if it doesn't exist (important for volume mounting)
-RUN mkdir -p /logs
+RUN mkdir -p /logs && chown -R demotuk:demotuk /logs && chown -R demotuk:demotuk /app
+
+# Switch to the non-root user
+USER demotuk
 
 # Expose the port that FastAPI will run on
 EXPOSE 12000

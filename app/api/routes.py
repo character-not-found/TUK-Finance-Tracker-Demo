@@ -148,7 +148,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
             expires=expires_at.strftime("%a, %d %b %Y %H:%M:%S GMT"),
             httponly=True,
             samesite="lax",
-            secure=False,
+            secure=True,
             path="/"
         )
         return {"message": "Login successful", "access_token": access_token, "token_type": "bearer"}
@@ -168,7 +168,7 @@ async def logout(response: Response):
         expires=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
         httponly=True,
         samesite="lax",
-        secure=False,
+        secure=True,
         path="/"
     )
     return {"message": "Logged out successfully"}

@@ -10,7 +10,7 @@ def configure_logging():
     one level up from the 'app' directory (i.e., in the 'site' directory).
     """
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.WARNING)
 
     # Prevent adding duplicate handlers, especially important with uvicorn's --reload
     if not logger.handlers:

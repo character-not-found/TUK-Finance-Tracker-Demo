@@ -10,6 +10,7 @@ services:
       - ./logs:/logs
     env_file:
        - ./.env.production
+    user: demotuk
     restart: unless-stopped
     depends_on:
       - db
@@ -22,6 +23,7 @@ services:
       - ./.env.production
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    user: demotuk
     networks:
       - demo_network
 
@@ -35,6 +37,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    user: caddy
     depends_on:
       - web-demo 
     networks:

@@ -1,5 +1,7 @@
 FROM python:3.12-slim-bookworm
 
+RUN addgroup --system demotuk && adduser --system --group demotuk
+
 # Set the working directory in the container
 WORKDIR /app
 
@@ -19,20 +21,16 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 # This ensures that Rust binaries (like rustc and cargo) are found
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# Removed: ENV PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 as it's not needed for Python 3.12
-
 # Copy the requirements file into the working directory
 COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
-# The PATH is now set globally, so no need for explicit export here
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire application code into the container
 COPY . .
 
 # Create the logs directory if it doesn't exist (important for volume mounting)
-# This ensures the directory exists before the app tries to write to it.
 RUN mkdir -p /logs
 
 # Expose the port that FastAPI will run on
